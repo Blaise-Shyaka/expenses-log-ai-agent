@@ -1,7 +1,7 @@
 "use client";
 
 import { CopilotKit } from "@copilotkit/react-core";
-import { CopilotSidebar } from "@copilotkit/react-ui"; 
+import { CopilotChat, CopilotSidebar } from "@copilotkit/react-ui"; 
 
 export default function Home() {
   return (

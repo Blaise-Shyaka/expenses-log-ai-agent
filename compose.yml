@@ -51,6 +51,8 @@ services:
         condition: service_healthy
     env_file:
       - ./expenses-api/.env
+    volumes:
+      - .:/app
   expenses-api-db:
     image: mysql
     env_file:
