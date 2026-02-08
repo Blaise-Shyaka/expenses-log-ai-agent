@@ -2,8 +2,8 @@ import {
   CopilotRuntime,
   GoogleGenerativeAIAdapter,
   copilotRuntimeNextJSAppRouterEndpoint,
-  LangGraphAgent
 } from '@copilotkit/runtime';
+import { LangGraphAgent } from '@copilotkit/runtime/langgraph';
 import { NextRequest } from 'next/server';
 
 const serviceAdapter = new GoogleGenerativeAIAdapter({ model: 'gemini-2.0-flash' });

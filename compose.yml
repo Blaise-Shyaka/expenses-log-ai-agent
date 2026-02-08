@@ -66,20 +66,5 @@ services:
       timeout: 20s
       retries: 5
       start_period: 30s
-  expenses-ui:
-    build: ./ui
-    ports:
-      - 3000:3000
-    depends_on:
-      expenses-agent:
-        condition: service_healthy
-    env_file:
-      - ./ui/.env
-    environment:
-      - AGENT_URL=http://expenses-agent:8123
-    develop:
-      watch:
-        - action: rebuild
-          path: ./ui
 volumes:
   mysql-data:

@@ -9,10 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@copilotkit/react-core": "^1.10.6",
-    "@copilotkit/react-textarea": "^1.10.6",
-    "@copilotkit/react-ui": "^1.10.6",
-    "@copilotkit/runtime": "^1.10.6",
+    "@copilotkit/react-core": "^1.51.3",
+    "@copilotkit/react-textarea": "^1.51.3",
+    "@copilotkit/react-ui": "^1.51.3",
+    "@copilotkit/runtime": "^1.51.3",
     "next": "15.5.2",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -25,5 +25,9 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.2",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@copilotkit/runtime": "$@copilotkit/runtime",
+    "@langchain/langgraph-sdk": "^1.6.0"
   }
 }

@@ -1,16 +1,30 @@
-FROM python:3.13
+# Builder stage
+FROM python:3.13-alpine AS builder
 
 WORKDIR /app
 
-# Adding curl to help me do a container healthcheck
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
- && rm -rf /var/lib/apt/lists/*
+# Install build dependencies
+RUN apk add --no-cache gcc musl-dev libffi-dev
 
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt \
- && pip install --no-cache-dir "langgraph-cli[inmem]"
 
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir "langgraph-cli[inmem]"
+
+# Runtime stage
+FROM python:3.13-alpine
+
+WORKDIR /app
+
+# Install runtime dependencies (curl for healthcheck, libgcc for jsonschema_rs)
+RUN apk add --no-cache curl libgcc
+
+# Copy Python packages from builder
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code
 COPY . .
 
 EXPOSE 8123
