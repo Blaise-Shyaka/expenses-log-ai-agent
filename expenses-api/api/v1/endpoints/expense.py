@@ -80,7 +80,9 @@ async def get_expenses_by_category(db: AsyncSession = Depends(get_db)):
 
 @router.get("/totals/since", response_model=ExpenseTotalResponse, tags=["Reports"])
 async def get_expenses_since(
-        payload: ExpenseSince,
+        days: Optional[int] = None,
+        start_date: Optional[datetime] = None,
+        category_name: Optional[str] = None,
         db: AsyncSession = Depends(get_db)
 ):
     if days is not None and start_date is None:
@@ -90,11 +92,11 @@ async def get_expenses_since(
         days = 30
         start_date = datetime.now() - timedelta(days=days)
 
-    expense_stmt = select(func.sum(ExpenseDB.amount).label("total")).where(ExpenseDB.date >= payload.start_date)
+    expense_stmt = select(func.sum(ExpenseDB.amount).label("total")).where(ExpenseDB.date >= start_date)
     
     # Apply category filter if provided
-    if payload.category_name:
-        expense_stmt = expense_stmt.join(CategoryDB).filter(func.lower(CategoryDB.name) == payload.category_name.lower())
+    if category_name:
+        expense_stmt = expense_stmt.join(CategoryDB).filter(func.lower(CategoryDB.name) == category_name.lower())
 
     result = await db.execute(expense_stmt)
     total = result.scalar() or 0.0
