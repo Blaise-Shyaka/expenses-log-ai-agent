@@ -1,4 +1,4 @@
-"""empty message
+"""Create users, categories, and expenses tables with UUID binary PKs
 
 Revision ID: a758fc557b16
 Revises: 

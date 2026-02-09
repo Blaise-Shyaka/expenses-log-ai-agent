@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 class CategoryBase(BaseModel):
   name: str
@@ -10,7 +11,7 @@ class CategoryCreate(CategoryBase):
   pass
 
 class Category(CategoryBase):
-  id: int
+  id: UUID
 
   class Config:
     from_attributes = True
@@ -24,8 +25,8 @@ class ExpenseCreate(ExpenseBase):
   category_name: str
 
 class Expense(ExpenseBase):
-  id: int
-  category_id: int
+  id: UUID
+  category_id: UUID
 
   class Config:
     from_attributes = True
@@ -36,7 +37,8 @@ class ExpenseWithCategory(Expense):
 class CategoryWithTotal(Category):
   total_expenses: float
 
-class ExpenseSince(BaseModel):
-  days: Optional[int]
-  start_date: Optional[datetime]
-  category_name: Optional[str]
+class ExpenseTotalResponse(BaseModel):
+  total: float
+  start_date: datetime
+  days: Optional[int] = None
+  category_name: Optional[str] = None

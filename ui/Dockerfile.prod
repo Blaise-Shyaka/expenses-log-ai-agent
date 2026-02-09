@@ -4,7 +4,7 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --only=production=false
+RUN npm ci
 
 # Stage 2: Build the application
 FROM node:20-alpine AS builder
@@ -30,7 +30,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+    adduser --system --uid 1001 --ingroup nodejs nextjs
 
 # Copy build artifacts from builder
 # Note: public folder is optional - create empty if needed

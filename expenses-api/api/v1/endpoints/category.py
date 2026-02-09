@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from api.deps import get_db
 from sqlalchemy import select, func
+from uuid import UUID
+from core.constants import TEST_USER_ID_BYTES
 
 router = APIRouter()
 
@@ -17,7 +19,8 @@ async def create_category(category: CategoryCreate, db: AsyncSession = Depends(g
         raise HTTPException(status_code=400, detail="Category already exists")
 
     category.name = category.name.lower()
-    db_category = CategoryDB(**category.model_dump())
+    # TODO: Replace TEST_USER_ID_BYTES with authenticated user's ID
+    db_category = CategoryDB(**category.model_dump(), user_id=TEST_USER_ID_BYTES)
     db.add(db_category)
     await db.commit()
     await db.refresh(db_category)
@@ -31,8 +34,8 @@ async def read_categories(skip: int = 0, limit: int = 100, db: AsyncSession = De
     return result.scalars().all()
 
 @router.get("/{category_id}", response_model=Category, tags=["Categories"])
-async def read_category(category_id: int, db: AsyncSession = Depends(get_db)):
-    category_stmt = select(CategoryDB).where(CategoryDB.id == category_id)
+async def read_category(category_id: UUID, db: AsyncSession = Depends(get_db)):
+    category_stmt = select(CategoryDB).where(CategoryDB.id == category_id.bytes)
     result = await db.execute(category_stmt)
     db_category = result.scalars().first()
     if db_category is None:

@@ -15,7 +15,7 @@ def get_all_expenses():
         response = requests.get(url)
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(e.args[0])
+        print(str(e))
 
 
 def create_expense_category(name, description):
@@ -33,7 +33,7 @@ def create_expense_category(name, description):
         response = requests.post(url, json=payload)
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(e.args[0])
+        print(str(e))
 
 
 def get_all_categories():
@@ -44,7 +44,7 @@ def get_all_categories():
         response = requests.get(url)
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(e.args)
+        print(str(e))
 
 
 def get_category_by_name(name):
@@ -59,7 +59,7 @@ def get_category_by_name(name):
         response = requests.get(url)
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(e.args)
+        print(str(e))
 
 
 def create_expense(amount, description, date, category_name):
@@ -83,7 +83,7 @@ def create_expense(amount, description, date, category_name):
         response = requests.post(url, json=payload)
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(e.args)
+        print(str(e))
 
 
 def get_expenses():
@@ -94,7 +94,7 @@ def get_expenses():
         response = requests.get(url)
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(e.args)
+        print(str(e))
 
 
 def get_expenses_by_category():
@@ -108,30 +108,36 @@ def get_expenses_by_category():
         response = requests.get(url)
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(e.args)
+        print(str(e))
 
 
 def get_expenses_since(days, start_date, category_name):
     """
-    Retrieves the total amount of expenses since a specified time period. You can define the period either by providing a specific start date or by specifying the number of past days. Optionally, expenses can be grouped by category.
+    Retrieves the total amount of expenses since a specified time period. You can define the period either by providing a specific start date or by specifying the number of past days. Optionally, expenses can be filtered by category.
 
     Parameters:
       days (int, optional): Number of past days from today to include in the total.
-      start_date (datetime, optional): Specific date from which to start calculating expenses. If not provided, today's date could be assumed as the start date.
-      category_name (str, optional): If provided, groups and returns expenses by this category. This is optional.
+      start_date (datetime, optional): Specific date from which to start calculating expenses. If not provided, defaults to 30 days ago.
+      category_name (str, optional): If provided, filters expenses by this category. This is optional.
 
     Returns:
-      Total expense amount, optionally grouped by category.
+      Object containing total expense amount plus the query parameters used (start_date, days, category_name).
     """
 
     url = EXPENSES_API_URL + "/expenses/totals/since"
-    payload = {"days": days, "start_date": start_date, "category_name": category_name}
+    params = {}
+    if days is not None:
+        params["days"] = days
+    if start_date is not None:
+        params["start_date"] = start_date
+    if category_name is not None:
+        params["category_name"] = category_name
 
     try:
-        response = requests.get(url, json=payload)
+        response = requests.get(url, params=params)
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(e.args)
+        print(str(e))
 
 
 tools = [

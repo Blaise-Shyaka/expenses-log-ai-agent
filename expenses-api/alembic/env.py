@@ -5,7 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 from db.base import BaseModel
-from db.models import UserDB, CategoryDB, ExpenseDB
+# Import models to register them with SQLAlchemy metadata for Alembic autogenerate
+from db.models import UserDB, CategoryDB, ExpenseDB  # noqa: F401
 from config.db_config import app_settings
 
 # this is the Alembic Config object, which provides
