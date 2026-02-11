@@ -31,17 +31,29 @@ cp .env.example .env
 # Edit the .env file to update values as needed
 ```
 
-### 3. Start the Application
+### 3. Start the Backend Services
 
-Back in the project root directory, run:
+Back in the project root directory, start the backend services:
 
 ```bash
-docker compose --build up
+docker compose up --build
 ```
 
-### 4. Access the App
+This starts the API, Agent, and MySQL database.
 
-Once the containers are up, open your browser and navigate to:
+### 4. Start the UI (separate terminal)
+
+In a new terminal, run the UI locally for faster development:
+
+```bash
+cd ui
+npm install
+npm run dev
+```
+
+### 5. Access the App
+
+Once everything is running, open your browser and navigate to:
 
 [http://localhost:3000](http://localhost:3000)
 

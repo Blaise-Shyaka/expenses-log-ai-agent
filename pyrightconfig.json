@@ -1,0 +1,13 @@
+{
+  "include": [
+    "expenses-agent",
+    "expenses-api"
+  ],
+  "typeCheckingMode": "strict",
+  "ignore": [
+    "expenses-agent/src/tools.py",
+    "expenses-agent/src/llm.py",
+    "ui",
+    "**/__pycache__"
+  ]
+}

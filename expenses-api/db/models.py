@@ -1,25 +1,35 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, func, DateTime
-from sqlalchemy.orm import relationship
-from db.base_class import Base
+from sqlalchemy import Column, String, Float, ForeignKey, DateTime
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.types import BINARY
+from db.base import BaseModel
 from datetime import datetime
 
-class CategoryDB(Base):
+class UserDB(BaseModel):
+  __tablename__ = "users"
+
+  first_name = Column(String(255), nullable=False)
+  last_name = Column(String(255), nullable=False)
+  email = Column(String(255), unique=True, index=True, nullable=False)
+  hashed_password = Column(String(255), index=True)
+  google_id = Column(String(255), index=True)
+
+class CategoryDB(BaseModel):
   __tablename__ = "categories"
 
-  id = Column(Integer, primary_key=True, index=True)
   name = Column(String(255), unique=True, index=True)
   description = Column(String(500), nullable=True)
+  user_id = Column(BINARY(16), ForeignKey("users.id"), nullable=False)
 
   expenses = relationship("ExpenseDB", back_populates="category")
 
 
-class ExpenseDB(Base):
+class ExpenseDB(BaseModel):
   __tablename__ = "expenses"
 
-  id = Column(Integer, primary_key=True, index=True)
-  amount = Column(Float)
+  amount: Mapped[float] = mapped_column(Float)
   description = Column(String(500), nullable=True)
   date = Column(DateTime, default=datetime.now)
-  category_id = Column(Integer, ForeignKey("categories.id"))
+  category_id = Column(BINARY(16), ForeignKey("categories.id"))
+  user_id = Column(BINARY(16), ForeignKey("users.id"), nullable=False)
 
   category = relationship("CategoryDB", back_populates="expenses")

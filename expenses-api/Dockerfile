@@ -1,17 +1,29 @@
-FROM python:3
-
-# Adding curl to help me do a healthcheck
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Builder stage
+FROM python:3.13-alpine AS builder
 
 WORKDIR /code
 
+# Install build dependencies
+RUN apk add --no-cache gcc musl-dev libffi-dev openssl-dev
+
 COPY ./requirements.txt /code/
 
+# Install Python dependencies
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
+# Runtime stage
+FROM python:3.13-alpine
+
+WORKDIR /code
+
+# Install runtime dependencies
+RUN apk add --no-cache curl libgcc
+
+# Copy Python packages from builder
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code
 COPY . /code
 
 CMD [ "fastapi", "run", "main.py", "--port", "52", "--host", "0.0.0.0" ]
