@@ -2,7 +2,9 @@ from src.nodes import gemini_node
 from src.agent_state import ExpensesAgentState
 from src.tools import tools
 from langgraph.graph import StateGraph, START, END
-from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.prebuilt import tools_condition, ToolNode
+
+print("in main")
 
 graph = StateGraph(ExpensesAgentState)
 
@@ -14,9 +16,11 @@ graph.add_conditional_edges(
     "gemini_node",
     tools_condition,
     {
-        "tools": "tools",  # If tools are needed, go to tools node
-        "__end__": END,  # If no tools needed, end the graph
-    },
+        "tools": "tools",  # Path to tools if needed
+        END: END           # Path to end if no tools needed
+    }
 )
 graph.add_edge("tools", "gemini_node")
-graph.compile()
+# graph.add_edge("gemini_node", END)
+
+chat = graph.compile()
