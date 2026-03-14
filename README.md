@@ -41,6 +41,15 @@ docker compose up --build
 
 This starts the API, Agent, and MySQL database.
 
+### 3.1 Run Ollama Locally (optional)
+
+If `USE_LOCAL_MODEL=true` in your `.env`, run Ollama via Docker:
+
+```bash
+docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+docker exec -it ollama ollama pull llama3.2
+```
+
 ### 4. Start the UI (separate terminal)
 
 In a new terminal, run the UI locally for faster development:

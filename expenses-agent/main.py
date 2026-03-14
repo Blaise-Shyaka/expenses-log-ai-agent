@@ -4,8 +4,11 @@ from src.tools import tools
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import tools_condition, ToolNode
 
+from langgraph.checkpoint.memory import MemorySaver
+
 print("in main")
 
+checkpointer = MemorySaver()
 graph = StateGraph(ExpensesAgentState)
 
 graph.add_node(gemini_node)
@@ -23,4 +26,4 @@ graph.add_conditional_edges(
 graph.add_edge("tools", "gemini_node")
 # graph.add_edge("gemini_node", END)
 
-chat = graph.compile()
+chat = graph.compile(checkpointer=checkpointer)

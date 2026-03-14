@@ -26,4 +26,4 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application code
 COPY . /code
 
-CMD [ "fastapi", "run", "main.py", "--port", "52", "--host", "0.0.0.0" ]
+CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "52" ]

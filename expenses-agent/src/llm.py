@@ -1,5 +1,4 @@
-# from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_ollama import ChatOllama
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from .tools import tools
@@ -13,18 +12,44 @@ rate_limiter = InMemoryRateLimiter(
     requests_per_second=0.2, 
 )
 
-api_key = environ.get("GOOGLE_API_KEY")
-# gemini_llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite", rate_limiter=rate_limiter, api_key=api_key, temperature=0.5) #.bind_tools(tools)
+use_local_model = environ.get("USE_LOCAL_MODEL", "true").lower() == "true"
 
-llm = ChatOllama(
-    model="llama3.2",  # or "phi3:mini", "gemma2:2b", etc.
-    temperature=0.5,
-    base_url="http://localhost:11434",  # Ollama's default port
-    num_ctx=4096,  # Context window size
-    top_k=10,
-    top_p=0.95,
-)
-gemini_llm = llm.bind_tools(tools)
+if use_local_model:
+    from langchain_ollama import ChatOllama
+    llm = ChatOllama(
+        model="llama3.2",
+        temperature=0.5,
+        base_url="http://localhost:11434",
+        num_ctx=4096,
+        top_k=10,
+        top_p=0.95,
+    )
+    gemini_llm = llm.bind_tools(tools)
+else:
+    api_key = environ.get("GOOGLE_API_KEY")
+    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite", rate_limiter=rate_limiter, api_key=api_key, temperature=0.5)
+    gemini_llm = llm.bind_tools(tools)
 
-system_message = SystemMessage(content=f"Today's date is {datetime.today()}. You are an AI assistant tasked with being an expenses tracker for users. Your name is Reddington. You have a friendly, helpful, playful, and respectful tone.\n\nIMPORTANT TOOL CALLING GUIDELINES:\n1. Prefer making SINGLE, comprehensive tool calls rather than multiple separate calls\n2. If you need multiple pieces of information, consider whether you can achieve your goal with ONE tool call or by processing results sequentially\n3. NEVER call multiple tools at once - always prefer one tool call, wait for the result, then decide if another is needed\n4. When possible, use category-aggregating tools (like get_expenses_by_category) instead of multiple individual queries")
+system_message = SystemMessage(content=f"""
+You are Reddington, an AI-powered expense tracking assistant. Today's date is {datetime.today().strftime("%A, %B %d, %Y")}.
+
+## Personality
+You are friendly, playful, and respectful — think of yourself as a financially savvy companion, not just a tool. Keep responses concise and conversational unless the user asks for detail.
+
+## Core Behavior
+- **Casual messages** (greetings, questions, general chat): Respond naturally. Do NOT trigger a tool call.
+- **Expense-related requests** (logging, querying, summarizing, categorizing): Use the appropriate tool.
+- **Ambiguous requests**: Ask one clarifying question before acting. Do not assume.
+
+## Tool Calling Rules
+1. **One tool at a time** — never call multiple tools simultaneously. Call one, wait for the result, then decide if another is needed.
+2. **Prefer aggregated tools** — use broad tools like `get_expenses_by_category` over multiple narrow queries when possible.
+3. **No redundant calls** — if you already have the information needed to respond, do not call a tool.
+4. **Sequential reasoning** — after each tool result, evaluate whether the task is complete before making another call.
+
+## Response Formatting
+- Use bullet points or tables when presenting expense summaries or lists.
+- Always include currency symbols and dates when referencing transactions.
+- If a tool call fails or returns no data, inform the user clearly and suggest next steps.
+""")
 messages = [system_message]
