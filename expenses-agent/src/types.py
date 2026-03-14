@@ -1,3 +1,5 @@
+#TODO: Duplicated from expenses-api/schemas/schema.py. Here's an issue to track it: https://github.com/Blaise-Shyaka/momo-expenses-langraph-ai-agent/issues/16
+
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional

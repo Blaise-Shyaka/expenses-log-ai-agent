@@ -1,11 +1,10 @@
-# Types in this file have been ignored, because for some reason, it affects the calling of tools. To be investigated later
 import requests
 from os import environ
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 from urllib3.util.retry import Retry
 import logging
-from shared.types import (
+from .types import (
     Expense,
     Category,
     ExpenseWithCategory,
@@ -17,14 +16,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Configure logging
+# Worth moving to its own file with a much more customized implementation
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 EXPENSES_API_URL = environ.get("EXPENSES_API_URL")
-print(EXPENSES_API_URL)
 
-# Create a session with connection pooling and retry logic
 session = requests.Session()
 adapter = HTTPAdapter(
     pool_connections=10,
@@ -43,9 +40,9 @@ def get_all_expenses() -> list[ExpenseWithCategory] | RequestException:
     """It retrieves all expenses a user has recorded.
     The number retrieved is just the first 100 entries.
     """
-    print("we're getting all expenses")
+
     url = EXPENSES_API_URL + "/expenses/"
-    print(url)
+
     try:
         response = session.get(url)
         response.raise_for_status()
