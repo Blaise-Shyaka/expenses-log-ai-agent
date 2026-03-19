@@ -1,19 +1,19 @@
 "use client";
 
-import { CopilotKit } from "@copilotkit/react-core";
-import { CopilotSidebar } from "@copilotkit/react-ui"; 
+import { CopilotKit, CopilotChat } from "@copilotkit/react-core/v2";
 
 export default function Home() {
   return (
     <CopilotKit agent="chat" runtimeUrl="/api/copilotkit">
-      <CopilotSidebar
-        defaultOpen={true}
-        clickOutsideToClose={false}
-        labels={{
-          title: "Expenses Tracker",
-          initial: "Hi! 👋 I'm Reddington. I can help you log your expenses, categorize them by category type, and get reports.",
-        }}
-      />
-    </CopilotKit> 
+      <main className="flex justify-center items-center h-full" style={{ height: '100vh' }} >
+        <CopilotChat
+          labels={{
+            welcomeMessageText: "Hi, I'm an expense tracker assistant. Any expenses to log today?"
+          }}
+          className="h-full rounded-2xl max-w-6xl mx-auto"
+        />
+      </main>
+    </CopilotKit>
+
   );
 }
