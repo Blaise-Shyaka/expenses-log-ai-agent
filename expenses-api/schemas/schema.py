@@ -1,4 +1,12 @@
-from pydantic import BaseModel, Field
+#standard packages
+
+#third party packages
+
+from pydantic import BaseModel, Field,EmailStr
+
+#local packages
+
+
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -42,3 +50,14 @@ class ExpenseTotalResponse(BaseModel):
   start_date: datetime
   days: Optional[int] = None
   category_name: Optional[str] = None
+
+class UserBase(BaseModel):
+  first_name:str
+  last_name:str
+  email:EmailStr
+
+class UserCreate(UserBase):
+  password:str|None=None
+
+class User(UserBase):
+  id:UUID

@@ -1,52 +1,33 @@
-from fastapi import APIRouter, HTTPException, Depends
-from schemas.schema import Category, CategoryCreate
-from db.models import CategoryDB
-from sqlalchemy.ext.asyncio import AsyncSession
+#standard packages
 from typing import List
-from api.deps import get_db
-from sqlalchemy import select, func
 from uuid import UUID
-from core.constants import TEST_USER_ID_BYTES
+
+#third party packages
+from fastapi import APIRouter, Depends
+
+#local packages
+from schemas import Category, CategoryCreate
+from api.deps import get_category_service
+from services import CategoryServices
 
 router = APIRouter()
 
 @router.post("/", response_model=Category, tags=["Categories"])
-async def create_category(category: CategoryCreate, db: AsyncSession = Depends(get_db)):
-    category_stmt = select(CategoryDB).where(func.lower(CategoryDB.name) == category.name.lower())
-    result = await db.execute(category_stmt)
-    category_exists = result.scalars().first()
-    if category_exists:
-        raise HTTPException(status_code=400, detail="Category already exists")
+async def create_category(category: CategoryCreate, category_services:CategoryServices=Depends(get_category_service)):
+    return await category_services.create_category(category=category)
 
-    category.name = category.name.lower()
-    # TODO: Replace TEST_USER_ID_BYTES with authenticated user's ID
-    db_category = CategoryDB(**category.model_dump(), user_id=TEST_USER_ID_BYTES)
-    db.add(db_category)
-    await db.commit()
-    await db.refresh(db_category)
-    return db_category
-
+   
 @router.get("/", response_model=List[Category], tags=["Categories"])
-async def read_categories(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+async def read_categories(skip: int = 0, limit: int = 100,category_services:CategoryServices=Depends(get_category_service)):
     #  TODO: Try to handle pagination in a much better way
-    categories_stmt = select(CategoryDB).offset(skip).limit(limit)
-    result = await db.execute(categories_stmt)
-    return result.scalars().all()
+    return await category_services.read_categories(skip=skip,limit=limit)
+
 
 @router.get("/{category_id}", response_model=Category, tags=["Categories"])
-async def read_category(category_id: UUID, db: AsyncSession = Depends(get_db)):
-    category_stmt = select(CategoryDB).where(CategoryDB.id == category_id.bytes)
-    result = await db.execute(category_stmt)
-    db_category = result.scalars().first()
-    if db_category is None:
-        raise HTTPException(status_code=404, detail="Category not found")
-    return db_category
+async def read_category(category_id: UUID, category_services:CategoryServices=Depends(get_category_service)):
+    return await category_services.read_category(id=category_id)
+
 
 @router.get("/name/{name}", response_model=Category, tags=["Categories"])
-async def read_category_by_name(name: str, db: AsyncSession = Depends(get_db)):
-    category_stmt = select(CategoryDB).where(func.lower(CategoryDB.name) == name.lower())
-    result = await db.execute(category_stmt)
-    db_category = result.scalars().first()
-    if db_category is None:
-        raise HTTPException(status_code=404, detail="Category not found")
-    return db_category
+async def read_category_by_name(name: str, category_services:CategoryServices=Depends(get_category_service)):
+    return await category_services.read_category_by_name(name=name)

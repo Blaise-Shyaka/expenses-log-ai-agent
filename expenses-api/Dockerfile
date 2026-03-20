@@ -6,6 +6,7 @@ WORKDIR /code
 # Install build dependencies
 RUN apk add --no-cache gcc musl-dev libffi-dev openssl-dev
 
+
 COPY ./requirements.txt /code/
 
 # Install Python dependencies
@@ -16,6 +17,8 @@ FROM python:3.13-alpine
 
 WORKDIR /code
 
+# Install dependencies to run bcrypt/python on alpine 
+RUN apk add --update musl-dev gcc cargo
 # Install runtime dependencies
 RUN apk add --no-cache curl libgcc
 
