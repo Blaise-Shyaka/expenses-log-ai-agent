@@ -27,7 +27,7 @@ chat = graph.compile(checkpointer=checkpointer)  # type: ignore
 app = FastAPI()
 
 add_langgraph_fastapi_endpoint(
-    app=app,
+    app,
     agent=LangGraphAGUIAgent(
         name="Reddington",
         description="AI-powered expense tracking assistant.",

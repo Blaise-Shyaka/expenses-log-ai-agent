@@ -13,22 +13,23 @@ rate_limiter = InMemoryRateLimiter(
 )
 
 use_local_model = environ.get("USE_LOCAL_MODEL", "true").lower() == "true"
+local_model_url = environ.get("LOCAL_MODEL_URL")
 
-if use_local_model:
+if use_local_model and local_model_url is not None:
     from langchain_ollama import ChatOllama
     llm = ChatOllama(
         model="llama3.2",
         temperature=0.5,
-        base_url="http://localhost:11434",
+        base_url=local_model_url,
         num_ctx=4096,
         top_k=10,
         top_p=0.95,
     )
-    gemini_llm = llm.bind_tools(tools)
+    active_llm = llm.bind_tools(tools)
 else:
     api_key = environ.get("GOOGLE_API_KEY")
     llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite", rate_limiter=rate_limiter, api_key=api_key, temperature=0.5)
-    gemini_llm = llm.bind_tools(tools)
+    active_llm = llm.bind_tools(tools)
 
 system_message = SystemMessage(content=f"""
 You are Reddington, an AI-powered expense tracking assistant. Today's date is {datetime.today().strftime("%A, %B %d, %Y")}.
