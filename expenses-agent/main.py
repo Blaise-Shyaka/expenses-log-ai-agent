@@ -21,7 +21,7 @@ graph.add_edge(START, "llm_node")
 graph.add_conditional_edges(
     "llm_node", tools_condition, {"tools": "tools", END: END}
 )
-graph.add_edge("tools", "gemini_node")
+graph.add_edge("tools", "llm_node")
 
 chat = graph.compile(checkpointer=checkpointer)  # type: ignore
 
@@ -38,7 +38,6 @@ add_langgraph_fastapi_endpoint(
 )
 
 def main():
-    """Run the uvicorn server."""
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
