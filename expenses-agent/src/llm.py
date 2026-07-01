@@ -1,4 +1,3 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from .tools import tools
@@ -8,28 +7,29 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-rate_limiter = InMemoryRateLimiter(
-    requests_per_second=0.2, 
-)
+ollama_url = environ.get("OLLAMA_URL")
 
-use_local_model = environ.get("USE_LOCAL_MODEL", "true").lower() == "true"
-local_model_url = environ.get("LOCAL_MODEL_URL")
-
-if use_local_model and local_model_url is not None:
+if ollama_url is not None:
     from langchain_ollama import ChatOllama
     llm = ChatOllama(
         model="llama3.2",
         temperature=0.5,
-        base_url=local_model_url,
+        base_url=ollama_url,
         num_ctx=4096,
         top_k=10,
         top_p=0.95,
     )
-    active_llm = llm.bind_tools(tools)
 else:
-    api_key = environ.get("GOOGLE_API_KEY")
-    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite", rate_limiter=rate_limiter, api_key=api_key, temperature=0.5)
-    active_llm = llm.bind_tools(tools)
+    from langchain_deepseek import ChatDeepSeek
+    rate_limiter = InMemoryRateLimiter(requests_per_second=0.2)
+    llm = ChatDeepSeek(
+        model="deepseek-chat",
+        rate_limiter=rate_limiter,
+        api_key=environ.get("DEEPSEEK_API_KEY"),
+        temperature=0.5,
+    )
+
+active_llm = llm.bind_tools(tools)
 
 system_message = SystemMessage(content=f"""
 You are Reddington, an AI-powered expense tracking assistant. Today's date is {datetime.today().strftime("%A, %B %d, %Y")}.

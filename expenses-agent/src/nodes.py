@@ -1,13 +1,13 @@
 from .llm import system_message
 from .agent_state import ExpensesAgentState
-from .llm import gemini_llm
+from .llm import active_llm
 import logging
 
 logger = logging.getLogger(__name__)
 
-def gemini_node(state: ExpensesAgentState):
+def llm_node(state: ExpensesAgentState):
     logger.info(f"Input state messages: {state['messages']}")
     msgs = [system_message] + state["messages"]
     logger.info(f"Messages being sent to LLM: {msgs}")
-    response = gemini_llm.invoke(msgs)
+    response = active_llm.invoke(msgs)
     return {"messages": [response]}
