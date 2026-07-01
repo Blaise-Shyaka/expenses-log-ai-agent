@@ -7,6 +7,7 @@ from ag_ui_langgraph import add_langgraph_fastapi_endpoint
 from copilotkit import LangGraphAGUIAgent
 from fastapi import FastAPI
 import uvicorn
+import os
 
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -41,7 +42,7 @@ def main():
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8123,
+        port=int(os.environ.get("PORT", 8123)),
         reload=True,
     )
 

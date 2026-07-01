@@ -30,4 +30,6 @@ USER nonroot
 
 WORKDIR /code
 
+EXPOSE 8123
+
 CMD ["python3", "main.py"]
