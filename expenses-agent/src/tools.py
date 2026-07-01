@@ -1,24 +1,58 @@
-# Types in this file have been ignored, because for some reason, it affects the calling of tools. To be investigated later
 import requests
 from os import environ
+from requests.adapters import HTTPAdapter
+from requests.exceptions import RequestException
+from urllib3.util.retry import Retry
+import logging
+from .types import (
+    Expense,
+    Category,
+    ExpenseWithCategory,
+    CategoryWithTotal,
+    ExpenseTotalResponse,
+)
+from datetime import datetime
+from dotenv import load_dotenv
 
-EXPENSES_API_URL = environ["EXPENSES_API_URL"]
+load_dotenv()
+
+# Worth moving to its own file with a much more customized implementation
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+EXPENSES_API_URL = environ.get("EXPENSES_API_URL")
+
+session = requests.Session()
+adapter = HTTPAdapter(
+    pool_connections=10,
+    pool_maxsize=20,
+    max_retries=Retry(
+        total=3,
+        backoff_factor=0.5,
+        status_forcelist=[500, 502, 503, 504],
+    ),
+)
+session.mount("http://", adapter)
+session.mount("https://", adapter)
 
 
-def get_all_expenses():
+def get_all_expenses() -> list[ExpenseWithCategory] | RequestException:
     """It retrieves all expenses a user has recorded.
     The number retrieved is just the first 100 entries.
     """
 
     url = EXPENSES_API_URL + "/expenses/"
+
     try:
-        response = requests.get(url)
+        response = session.get(url)
+        response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(str(e))
+        logger.error(f"Error fetching expenses: {e}")
+        return e
 
 
-def create_expense_category(name, description):
+def create_expense_category(name: str, description: str) -> Category | RequestException:
     """It creates an new expense category, if it doesn't alread exist. All expenses are recorded under a specific category
     This helps to retrieve and record an expense category.
 
@@ -30,24 +64,28 @@ def create_expense_category(name, description):
     url = EXPENSES_API_URL + "/categories/"
     payload = {"name": name, "description": description}
     try:
-        response = requests.post(url, json=payload)
+        response = session.post(url, json=payload)
+        response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(str(e))
+        logger.error(f"Error creating expense category: {e}")
+        return e
 
 
-def get_all_categories():
+def get_all_categories() -> list[Category] | RequestException:
     """It retrieves all categories. It retrieves the first 100 entries."""
 
     url = EXPENSES_API_URL + "/categories/"
     try:
-        response = requests.get(url)
+        response = session.get(url)
+        response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(str(e))
+        logger.error(f"Error fetching categories: {e}")
+        return e
 
 
-def get_category_by_name(name):
+def get_category_by_name(name: str) -> Category | RequestException:
     """It retrieves a category by name.
 
     parameters:
@@ -56,13 +94,17 @@ def get_category_by_name(name):
 
     url = EXPENSES_API_URL + "/categories/name/" + name
     try:
-        response = requests.get(url)
+        response = session.get(url)
+        response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(str(e))
+        logger.error(f"Error fetching category by name: {e}")
+        return e
 
 
-def create_expense(amount, description, date, category_name):
+def create_expense(
+    amount: float, description: str, date: datetime, category_name: str
+) -> Expense | RequestException:
     """It records a new expense.
 
     parameters:
@@ -80,24 +122,15 @@ def create_expense(amount, description, date, category_name):
         "category_name": category_name,
     }
     try:
-        response = requests.post(url, json=payload)
+        response = session.post(url, json=payload)
+        response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(str(e))
+        logger.error(f"Error creating expense: {e}")
+        return e
 
 
-def get_expenses():
-    """It retrieves all the expenses a user has recorded. The limit is the first 100 items recorded."""
-
-    url = EXPENSES_API_URL + "/expenses/"
-    try:
-        response = requests.get(url)
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(str(e))
-
-
-def get_expenses_by_category():
+def get_expenses_by_category() -> list[CategoryWithTotal] | RequestException:
     """
     Retrieves the total amount of expenses recorded by a user, grouped by category.
 
@@ -105,13 +138,17 @@ def get_expenses_by_category():
     """
     url = EXPENSES_API_URL + "/expenses/totals/by-category/"
     try:
-        response = requests.get(url)
+        response = session.get(url)
+        response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(str(e))
+        logger.error(f"Error fetching expenses by category: {e}")
+        return e
 
 
-def get_expenses_since(days, start_date, category_name):
+def get_expenses_since(
+    days: int | None, start_date: datetime | None, category_name: str
+) -> ExpenseTotalResponse | RequestException:
     """
     Retrieves the total amount of expenses since a specified time period. You can define the period either by providing a specific start date or by specifying the number of past days. Optionally, expenses can be filtered by category.
 
@@ -134,10 +171,12 @@ def get_expenses_since(days, start_date, category_name):
         params["category_name"] = category_name
 
     try:
-        response = requests.get(url, params=params)
+        response = session.get(url, params=params)
+        response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(str(e))
+        logger.error(f"Error fetching expenses since: {e}")
+        return e
 
 
 tools = [
@@ -146,7 +185,6 @@ tools = [
     get_all_categories,
     get_category_by_name,
     create_expense,
-    get_expenses,
     get_expenses_by_category,
     get_expenses_since,
 ]

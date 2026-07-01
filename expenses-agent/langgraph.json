@@ -2,5 +2,6 @@
   "dependencies": ".",
   "graphs": {
     "chat": "./main.py:graph"
-  }
+  },
+  "env": ".env"
 }

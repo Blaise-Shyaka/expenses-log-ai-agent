@@ -3,6 +3,7 @@
 *.pyc
 *.pyo
 __pycache__/
+**/.langgraph_api/
 
 # Python virtual environments
 momo_env/
