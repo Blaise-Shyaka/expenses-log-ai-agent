@@ -16,6 +16,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+def _serialize_datetime(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    return value.isoformat()
+
+
 # Worth moving to its own file with a much more customized implementation
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -118,7 +125,7 @@ def create_expense(
     payload = {
         "amount": amount,
         "description": description,
-        "date": date,
+        "date": _serialize_datetime(date),
         "category_name": category_name,
     }
     try:
@@ -166,7 +173,7 @@ def get_expenses_since(
     if days is not None:
         params["days"] = days
     if start_date is not None:
-        params["start_date"] = start_date
+        params["start_date"] = _serialize_datetime(start_date)
     if category_name is not None:
         params["category_name"] = category_name
 
