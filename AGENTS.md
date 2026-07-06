@@ -38,9 +38,9 @@ docker exec -it ollama ollama pull llama3.2
 Each package has its own `.env` (copy from `.env.example`). No shared root `.env`.
 
 **`expenses-agent/.env`:**
-- `GOOGLE_API_KEY` — Gemini API key (only needed if `USE_LOCAL_MODEL=false`)
+- `DEEPSEEK_API_KEY` — DeepSeek API key (only needed if `OLLAMA_URL` is not set)
+- `OLLAMA_URL` — set to your Ollama base URL (e.g. `http://localhost:11434`) to use a local model instead of DeepSeek
 - `EXPENSES_API_URL` — defaults to `http://0.0.0.0:8000/api/v1` for local dev; Docker Compose overrides to `http://expenses-api:52/api/v1` via environment block in `compose.yml`
-- `USE_LOCAL_MODEL=true` — toggles Ollama vs Gemini
 - `LANGSMITH_API_KEY` — optional tracing
 
 **`expenses-api/.env`:**
@@ -50,7 +50,6 @@ Each package has its own `.env` (copy from `.env.example`). No shared root `.env
 
 **`ui/.env`:**
 - `AGENT_URL` — defaults to `http://localhost:8123`
-- `GOOGLE_API_KEY` — used by `ExperimentalOllamaAdapter` in the CopilotKit route (note: despite the name, the UI route uses Ollama adapter with model `llama:3.2`)
 
 ---
 
@@ -103,16 +102,16 @@ The `# type: ignore` comments in `main.py` are intentional due to missing langgr
 
 **Graph** (`expenses-agent/main.py`):
 ```
-START → gemini_node → [tools_condition] → tools → gemini_node → END
+START → llm_node → [tools_condition] → tools → llm_node → END
 ```
-- `gemini_node`: prepends system prompt to state messages, calls bound LLM
+- `llm_node`: prepends system prompt to state messages, calls bound LLM
 - `tools`: `ToolNode` wrapping 7 tool functions in `src/tools.py`
 - `MemorySaver` checkpointer for in-memory conversation state
 - Agent name: `"Reddington"` (used by CopilotKit to route `agent="chat"`)
 
 **LLM selection** (`src/llm.py`):
-- `USE_LOCAL_MODEL=true` → `ChatOllama` (llama3.2, localhost:11434)
-- `USE_LOCAL_MODEL=false` → `ChatGoogleGenerativeAI` (gemini-2.0-flash-lite) with `InMemoryRateLimiter` at 0.2 req/s
+- `OLLAMA_URL` set → `ChatOllama` (llama3.2, at the configured URL)
+- `OLLAMA_URL` not set → `ChatDeepSeek` (deepseek-chat) with `InMemoryRateLimiter` at 0.2 req/s
 
 **Tools** are plain Python functions with docstrings — LangChain uses the docstrings as tool descriptions for the LLM. Keep docstrings accurate and detailed.
 
