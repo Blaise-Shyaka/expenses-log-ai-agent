@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:types": "tsc --noEmit"
   },
   "dependencies": {
     "@copilotkit/react-core": "^1.54.0",

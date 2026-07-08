@@ -1,44 +1,53 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
+from pydantic import BaseModel, Field
+
+
 class CategoryBase(BaseModel):
-  name: str
-  description: Optional[str] = None
+    name: str
+    description: str | None = None
+
 
 class CategoryCreate(CategoryBase):
-  pass
+    pass
+
 
 class Category(CategoryBase):
-  id: UUID
+    id: UUID
 
-  class Config:
-    from_attributes = True
+    class Config:
+        from_attributes = True
+
 
 class ExpenseBase(BaseModel):
-  amount: float
-  description: Optional[str] = None
-  date: Optional[datetime] = Field(default_factory=datetime.now)
+    amount: float
+    description: str | None = None
+    date: datetime | None = Field(default_factory=datetime.now)
+
 
 class ExpenseCreate(ExpenseBase):
-  category_name: str
+    category_name: str
+
 
 class Expense(ExpenseBase):
-  id: UUID
-  category_id: UUID
+    id: UUID
+    category_id: UUID
 
-  class Config:
-    from_attributes = True
+    class Config:
+        from_attributes = True
+
 
 class ExpenseWithCategory(Expense):
-  category: Category
+    category: Category
+
 
 class CategoryWithTotal(Category):
-  total_expenses: float
+    total_expenses: float
+
 
 class ExpenseTotalResponse(BaseModel):
-  total: float
-  start_date: datetime
-  days: Optional[int] = None
-  category_name: Optional[str] = None
+    total: float
+    start_date: datetime
+    days: int | None = None
+    category_name: str | None = None

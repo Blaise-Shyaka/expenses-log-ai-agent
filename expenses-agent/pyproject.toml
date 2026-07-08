@@ -20,4 +20,15 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["langgraph-cli[inmem]>=0.4.18"]
+dev = [
+  "langgraph-cli[inmem]>=0.4.18",
+  "pyright>=1.1.411",
+  "ruff>=0.9.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]

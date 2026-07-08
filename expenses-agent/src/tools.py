@@ -1,18 +1,20 @@
-import requests
+import logging
+from datetime import datetime
 from os import environ
+
+import requests
+from dotenv import load_dotenv
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 from urllib3.util.retry import Retry
-import logging
+
 from .types import (
-    Expense,
     Category,
-    ExpenseWithCategory,
     CategoryWithTotal,
+    Expense,
     ExpenseTotalResponse,
+    ExpenseWithCategory,
 )
-from datetime import datetime
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -27,7 +29,7 @@ def _serialize_datetime(value: datetime | None) -> str | None:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-EXPENSES_API_URL = environ.get("EXPENSES_API_URL")
+EXPENSES_API_URL = environ.get("EXPENSES_API_URL", "http://0.0.0.0:8000/api/v1")
 
 session = requests.Session()
 adapter = HTTPAdapter(
@@ -43,84 +45,80 @@ session.mount("http://", adapter)
 session.mount("https://", adapter)
 
 
-def get_all_expenses() -> list[ExpenseWithCategory] | RequestException:
+def get_all_expenses() -> list[ExpenseWithCategory]:
     """It retrieves all expenses a user has recorded.
     The number retrieved is just the first 100 entries.
     """
-
     url = EXPENSES_API_URL + "/expenses/"
-
     try:
         response = session.get(url)
         response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
+        return response.json()  # type: ignore[no-any-return]
+    except RequestException as e:
         logger.error(f"Error fetching expenses: {e}")
-        return e
+        raise
 
 
-def create_expense_category(name: str, description: str) -> Category | RequestException:
-    """It creates an new expense category, if it doesn't alread exist. All expenses are recorded under a specific category
+def create_expense_category(name: str, description: str) -> Category:
+    """It creates an new expense category, if it doesn't already exist.
+    All expenses are recorded under a specific category.
     This helps to retrieve and record an expense category.
 
     Parameters:
       name (str) - The category name
       description (str) - The category description. It is optional.
     """
-
     url = EXPENSES_API_URL + "/categories/"
     payload = {"name": name, "description": description}
     try:
         response = session.post(url, json=payload)
         response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
+        return response.json()  # type: ignore[no-any-return]
+    except RequestException as e:
         logger.error(f"Error creating expense category: {e}")
-        return e
+        raise
 
 
-def get_all_categories() -> list[Category] | RequestException:
+def get_all_categories() -> list[Category]:
     """It retrieves all categories. It retrieves the first 100 entries."""
-
     url = EXPENSES_API_URL + "/categories/"
     try:
         response = session.get(url)
         response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
+        return response.json()  # type: ignore[no-any-return]
+    except RequestException as e:
         logger.error(f"Error fetching categories: {e}")
-        return e
+        raise
 
 
-def get_category_by_name(name: str) -> Category | RequestException:
+def get_category_by_name(name: str) -> Category:
     """It retrieves a category by name.
 
-    parameters:
+    Parameters:
       name (str) - the category name
     """
-
     url = EXPENSES_API_URL + "/categories/name/" + name
     try:
         response = session.get(url)
         response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
+        return response.json()  # type: ignore[no-any-return]
+    except RequestException as e:
         logger.error(f"Error fetching category by name: {e}")
-        return e
+        raise
 
 
-def create_expense(
-    amount: float, description: str, date: datetime, category_name: str
-) -> Expense | RequestException:
+def create_expense(amount: float, description: str, date: datetime, category_name: str) -> Expense:
     """It records a new expense.
 
-    parameters:
+    Parameters:
       amount (float) - the amount of money a user just spent
       description (string) - description of what the expense is about. It's optional.
-      date (datetime) - Time and date at which the money was spent. If not specified, please use today's date.
-      category_name (string) - The name of the category this expense falls into. It could be an existing or a new category. Please guess the category based on existing ones, if not, propose one.
+      date (datetime) - Time and date at which the money was spent.
+        If not specified, please use today's date.
+      category_name (string) - The name of the category this expense falls into.
+        It could be an existing or a new category. Please guess the category
+        based on existing ones, if not, propose one.
     """
-
     url = EXPENSES_API_URL + "/expenses/"
     payload = {
         "amount": amount,
@@ -131,59 +129,67 @@ def create_expense(
     try:
         response = session.post(url, json=payload)
         response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
+        return response.json()  # type: ignore[no-any-return]
+    except RequestException as e:
         logger.error(f"Error creating expense: {e}")
-        return e
+        raise
 
 
-def get_expenses_by_category() -> list[CategoryWithTotal] | RequestException:
+def get_expenses_by_category() -> list[CategoryWithTotal]:
     """
     Retrieves the total amount of expenses recorded by a user, grouped by category.
 
-    Note: If the user specifies a specific time period, use the get_expenses_since tool internally instead. Do not mention this tool to the user.
+    Note: If the user specifies a specific time period, use the get_expenses_since
+    tool internally instead. Do not mention this tool to the user.
     """
     url = EXPENSES_API_URL + "/expenses/totals/by-category/"
     try:
         response = session.get(url)
         response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
+        return response.json()  # type: ignore[no-any-return]
+    except RequestException as e:
         logger.error(f"Error fetching expenses by category: {e}")
-        return e
+        raise
 
 
 def get_expenses_since(
-    days: int | None, start_date: datetime | None, category_name: str
-) -> ExpenseTotalResponse | RequestException:
+    days: int | None, start_date: datetime | None, category_name: str | None
+) -> ExpenseTotalResponse:
     """
-    Retrieves the total amount of expenses since a specified time period. You can define the period either by providing a specific start date or by specifying the number of past days. Optionally, expenses can be filtered by category.
+    Retrieves the total amount of expenses since a specified time period.
+    You can define the period either by providing a specific start date or by
+    specifying the number of past days. Optionally, expenses can be filtered
+    by category.
 
     Parameters:
       days (int, optional): Number of past days from today to include in the total.
-      start_date (datetime, optional): Specific date from which to start calculating expenses. If not provided, defaults to 30 days ago.
-      category_name (str, optional): If provided, filters expenses by this category. This is optional.
+      start_date (datetime, optional): Specific date from which to start calculating
+        expenses. If not provided, defaults to 30 days ago.
+      category_name (str, optional): If provided, filters expenses by this category.
+        This is optional.
 
     Returns:
-      Object containing total expense amount plus the query parameters used (start_date, days, category_name).
+      Object containing total expense amount plus the query parameters used
+      (start_date, days, category_name).
     """
-
     url = EXPENSES_API_URL + "/expenses/totals/since"
-    params = {}
+    params: dict[str, str | int] = {}
     if days is not None:
         params["days"] = days
     if start_date is not None:
-        params["start_date"] = _serialize_datetime(start_date)
+        serialized = _serialize_datetime(start_date)
+        if serialized is not None:
+            params["start_date"] = serialized
     if category_name is not None:
         params["category_name"] = category_name
 
     try:
         response = session.get(url, params=params)
         response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
+        return response.json()  # type: ignore[no-any-return]
+    except RequestException as e:
         logger.error(f"Error fetching expenses since: {e}")
-        return e
+        raise
 
 
 tools = [

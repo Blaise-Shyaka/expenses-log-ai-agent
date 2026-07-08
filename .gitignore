@@ -3,6 +3,7 @@
 *.pyc
 *.pyo
 __pycache__/
+.ruff_cache/
 **/.langgraph_api/
 
 # Python virtual environments
@@ -10,7 +11,9 @@ momo_env/
 venv/
 env/
 .venv/
-.vscode
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # dependencies
 node_modules
