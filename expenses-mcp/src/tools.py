@@ -25,11 +25,10 @@ def _serialize_datetime(value: datetime | None) -> str | None:
     return value.isoformat()
 
 
-# Worth moving to its own file with a much more customized implementation
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-EXPENSES_API_URL = environ.get("EXPENSES_API_URL", "http://0.0.0.0:8000/api/v1")
+EXPENSES_API_URL = environ.get("EXPENSES_API_URL", "http://localhost:8000/api/v1")
 
 session = requests.Session()
 adapter = HTTPAdapter(

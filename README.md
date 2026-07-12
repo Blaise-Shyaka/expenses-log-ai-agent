@@ -4,7 +4,7 @@ Track your personal expenses by simply talking to an AI. Paste a payment confirm
 
 **[Try the live demo](http://dywm0f0jdse5uuzns55y6avz.161.97.78.63.sslip.io/)**
 
-Chat interactions happen through a [CopilotKit](https://docs.copilotkit.ai) interface that routes messages to a LangGraph agent. The agent extracts expense details, picks a category, and records them via a REST API. An MCP server integration is in the works (coming soon).
+Chat interactions happen through a [CopilotKit](https://docs.copilotkit.ai) interface that routes messages to a LangGraph agent. The agent calls tools exposed by an MCP server, which records expenses via a REST API.
 
 ## Motivation
 
@@ -30,12 +30,13 @@ There are already default categories, but you can edit or add more. If you'd pre
 
 ## Architecture
 
-Three services, each with its own README:
+Four services, each with its own README:
 
 | Service | Description | README |
 |---|---|---|
 | **expenses-api** | FastAPI REST API that stores and queries expenses via MySQL | [README](./expenses-api/README.md) |
-| **expenses-agent** | LangGraph AI agent that understands messages, calls tools, and records expenses | [README](./expenses-agent/README.md) |
+| **expenses-mcp** | MCP server that exposes expense tools to the agent | [README](./expenses-mcp/README.md) |
+| **expenses-agent** | LangGraph AI agent that understands messages and calls MCP tools | [README](./expenses-agent/README.md) |
 | **ui** | Next.js chat interface powered by CopilotKit | [README](./ui/README.md) |
 
 ### Request Flow
@@ -46,23 +47,32 @@ User types message
       ▼
   UI (port 3000)
   CopilotChat component
-      │  POST /api/copilotkit
+      │  POST /api/copilotkit  (Next.js route handler)
+      ▼
+  UI route handler
+  proxies AG-UI streaming request
+      │  POST / (AG-UI protocol)
       ▼
   Expenses Agent (port 8123)
-  LangGraph graph: llm_node → tools → llm_node
-      │  LLM decides which tool to call
+  LangGraph: llm_node → [tool call?] → llm_node
+      │  executes tool (loaded from MCP at startup)
+      ▼
+  Tool makes HTTP call
+      │  HTTP to /api/v1/...
       ▼
   Expenses API (port 8000)
   FastAPI REST endpoints
       │  async SQLAlchemy
       ▼
   MySQL (port 3306)
-  expenses, categories, users tables
+  users, categories, expenses tables
       │
       ▼
   Response flows back up the chain
   Agent replies in natural language
 ```
+
+> **Note on MCP:** The agent connects to the MCP server (`expenses-mcp`, port 8124) once at startup to load its tools. During a conversation, tool calls execute in-process — the agent does not make a round-trip to the MCP server per message.
 
 The agent can use either [DeepSeek](https://platform.deepseek.com) (cloud) or [Ollama](https://ollama.com) (local) as its LLM, controlled by a single environment variable.
 
@@ -77,6 +87,7 @@ cd expenses-log-ai-agent
 
 Then follow each service's README in order:
 
-1. [expenses-api](./expenses-api/README.md); start MySQL and the REST API first
-2. [expenses-agent](./expenses-agent/README.md); start the agent (depends on the API)
-3. [ui](./ui/README.md); start the chat interface last
+1. [expenses-api](./expenses-api/README.md) — start MySQL and the REST API first
+2. [expenses-mcp](./expenses-mcp/README.md) — start the MCP tool server (depends on the API)
+3. [expenses-agent](./expenses-agent/README.md) — start the agent (depends on the MCP server)
+4. [ui](./ui/README.md) — start the chat interface last
