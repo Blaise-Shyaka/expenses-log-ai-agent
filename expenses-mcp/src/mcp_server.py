@@ -8,7 +8,6 @@ Run standalone (from expenses-mcp/):
 The agent (main.py) does NOT start this process — they run as separate processes.
 """
 
-import os
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -44,9 +43,6 @@ from .types import (
 )
 
 load_dotenv()
-
-_MCP_HOST: str = os.environ.get("MCP_HOST", "0.0.0.0")
-_MCP_PORT: int = int(os.environ.get("MCP_PORT", "8124"))
 
 mcp: FastMCP = FastMCP("expenses-tools")  # type: ignore[call-arg]
 

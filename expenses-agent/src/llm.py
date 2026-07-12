@@ -1,10 +1,12 @@
 from datetime import datetime
 from os import environ
-from typing import Any
 
 from dotenv import load_dotenv
-from langchain_core.messages import SystemMessage
+from langchain_core.language_models import LanguageModelInput
+from langchain_core.messages import AIMessage, SystemMessage
 from langchain_core.rate_limiters import InMemoryRateLimiter
+from langchain_core.runnables import Runnable
+from langchain_core.tools import BaseTool
 from pydantic import SecretStr
 
 load_dotenv()
@@ -34,7 +36,7 @@ else:
     )
 
 
-def get_active_llm(tools: list[Any]) -> Any:
+def get_active_llm(tools: list[BaseTool]) -> Runnable[LanguageModelInput, AIMessage]:
     return llm.bind_tools(tools)  # pyright: ignore[reportUnknownMemberType]
 
 
