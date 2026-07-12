@@ -25,7 +25,6 @@ def _serialize_datetime(value: datetime | None) -> str | None:
     return value.isoformat()
 
 
-# Worth moving to its own file with a much more customized implementation
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,11 @@
 from datetime import datetime
 from os import environ
+from typing import Any
 
 from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from pydantic import SecretStr
-
-from .tools import tools
 
 load_dotenv()
 
@@ -34,7 +33,10 @@ else:
         temperature=0.5,
     )
 
-active_llm = llm.bind_tools(tools)  # pyright: ignore[reportUnknownMemberType]
+
+def get_active_llm(tools: list[Any]) -> Any:
+    return llm.bind_tools(tools)  # pyright: ignore[reportUnknownMemberType]
+
 
 today = datetime.today().strftime("%A, %B %d, %Y")
 system_message = SystemMessage(

@@ -1,0 +1,25 @@
+[project]
+name = "expenses-mcp"
+version = "0.1.0"
+description = "FastMCP tool server for expenses"
+requires-python = ">=3.13"
+dependencies = [
+  "fastmcp>=2.0,<3",
+  "requests==2.32.5",
+  "urllib3==2.6.3",
+  "python-dotenv==1.2.2",
+  "pydantic==2.12.5",
+]
+
+[dependency-groups]
+dev = [
+  "pyright>=1.1.411",
+  "ruff>=0.9.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
