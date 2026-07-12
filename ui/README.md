@@ -5,7 +5,7 @@ Next.js chat interface powered by [CopilotKit](https://docs.copilotkit.ai). Talk
 ## Prerequisites
 
 - Node.js 18+
-- npm
+- pnpm
 - [Expenses Agent](../expenses-agent/README.md). It should run at `AGENT_URL` that you'll pass in `.env`.
 
 ## 1. Configure Environment

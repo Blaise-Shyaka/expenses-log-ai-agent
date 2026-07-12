@@ -1,12 +1,12 @@
 # Expenses Agent
 
-LangGraph AI agent that understands, categorizes, and records expenses. Communicates with the Expenses API to record and query data. Runs as a FastAPI server on port 8123.
+LangGraph AI agent that understands, categorizes, and records expenses. Talks to the user via a CopilotKit chat interface and calls tools exposed by the MCP server. Runs as a FastAPI server on port 8123.
 
 ## Prerequisites
 
 - Python 3.13+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/), a Python package manager
-- [Expenses API](../expenses-api/README.md) running at `http://localhost:8000`
+- [Expenses MCP](../expenses-mcp/README.md) running at `http://localhost:8124`
 
 ## 1. Configure Environment
 
@@ -37,17 +37,17 @@ docker exec -it ollama ollama pull llama3.2
 OLLAMA_URL=http://localhost:11434
 ```
 
-> If `OLLAMA_URL` is set, it takes precedence and Deepseek is ignored.
+> If `OLLAMA_URL` is set, it takes precedence and DeepSeek is ignored.
 
-### Expenses API URL
+### MCP Server URL
 
 The default value in `.env.example` works as-is for local development:
 
 ```
-EXPENSES_API_URL=http://localhost:8000/api/v1
+MCP_URL=http://localhost:8124
 ```
 
-> `/api/v1` is the API's base path. All routes are prefixed with it.
+> The agent connects to this URL on startup to load its tools. It retries with exponential backoff, so it tolerates the MCP server not being immediately ready.
 
 ## 2. Install Dependencies
 
