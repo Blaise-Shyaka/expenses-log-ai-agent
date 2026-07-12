@@ -12,6 +12,8 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 from fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 from .tools import (
     create_expense as _create_expense,
@@ -45,6 +47,11 @@ from .types import (
 load_dotenv()
 
 mcp: FastMCP = FastMCP("expenses-tools")  # type: ignore[call-arg]
+
+
+@mcp.custom_route("/health", methods=["GET"])  # type: ignore[misc]
+async def health_check(request: Request) -> JSONResponse:
+    return JSONResponse({"status": "ok"})
 
 
 @mcp.tool  # type: ignore[misc]

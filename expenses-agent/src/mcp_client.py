@@ -3,8 +3,6 @@ import os
 
 import httpx
 from dotenv import load_dotenv
-from langchain_core.tools import BaseTool
-from langchain_mcp_adapters.client import MultiServerMCPClient
 
 load_dotenv()
 
@@ -29,15 +27,3 @@ async def wait_for_mcp(
                 await asyncio.sleep(min(delay, 30.0))
                 delay *= 2
     raise RuntimeError(f"MCP server at {url} did not become healthy after {max_retries} retries")
-
-
-async def load_tools(mcp_url: str) -> list[BaseTool]:
-    async with MultiServerMCPClient(  # type: ignore[call-arg]
-        {
-            "expenses": {
-                "transport": "streamable_http",
-                "url": f"{mcp_url}/mcp",
-            }
-        }
-    ) as client:
-        return await client.get_tools()
