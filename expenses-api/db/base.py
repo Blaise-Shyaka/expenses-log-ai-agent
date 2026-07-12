@@ -1,7 +1,10 @@
-from db.base_class import Base
-from sqlalchemy import Column, func, DateTime
-from sqlalchemy.types import BINARY
 from uuid import uuid4
+
+from sqlalchemy import Column, DateTime, func
+from sqlalchemy.types import BINARY
+
+from db.base_class import Base
+
 
 class BaseModel(Base):
     __abstract__ = True

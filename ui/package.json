@@ -6,28 +6,27 @@
     "dev": "next dev",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:types": "tsc --noEmit"
   },
   "dependencies": {
-    "@copilotkit/react-core": "^1.54.0",
-    "@copilotkit/react-textarea": "^1.54.0",
-    "@copilotkit/react-ui": "^1.54.0",
-    "@copilotkit/runtime": "^1.54.0",
-    "next": "15.5.2",
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "@copilotkit/react-core": "^1.62.3",
+    "@copilotkit/react-textarea": "^1.62.3",
+    "@copilotkit/react-ui": "^1.62.3",
+    "@copilotkit/runtime": "^1.62.3",
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "eslint": "^9",
-    "eslint-config-next": "15.5.2",
+    "eslint-config-next": "^16.2.10",
     "typescript": "^5"
   },
   "overrides": {
-    "@copilotkit/runtime": "$@copilotkit/runtime",
-    "@langchain/langgraph-sdk": "^1.6.0"
+    "@copilotkit/runtime": "$@copilotkit/runtime"
   }
 }

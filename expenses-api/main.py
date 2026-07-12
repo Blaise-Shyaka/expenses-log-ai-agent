@@ -1,8 +1,10 @@
+import os
+
+import uvicorn
 from fastapi import FastAPI
+
 from api.v1.endpoints.category import router as category_router
 from api.v1.endpoints.expense import router as expense_router
-import uvicorn
-import os
 
 app = FastAPI(title="Expenses Tracker API")
 
