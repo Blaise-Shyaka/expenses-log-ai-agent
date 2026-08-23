@@ -49,6 +49,21 @@ MCP_URL=http://localhost:8124
 
 > The agent connects to this URL on startup to load its tools. It retries with exponential backoff, so it tolerates the MCP server not being immediately ready.
 
+### Auth Service
+
+The agent validates incoming user JWTs and obtains its own service token for downstream MCP calls. Set these variables to point at your auth service:
+
+```
+AUTH_JWKS_URI=http://localhost:9000/.well-known/jwks.json
+AUTH_ISSUER=http://localhost:9000
+AUTH_TOKEN_URL=http://localhost:9000/oauth/token
+AGENT_CLIENT_ID=expenses-agent
+AGENT_CLIENT_SECRET=<your-client-secret>
+AUTH_REQUIRED=true
+```
+
+Set `AUTH_REQUIRED=false` during local development without an auth service — the agent will skip JWT verification and use the hardcoded dev user id. **Never use this in production.**
+
 ## 2. Install Dependencies
 
 ```bash

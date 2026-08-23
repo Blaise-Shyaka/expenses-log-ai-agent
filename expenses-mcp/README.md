@@ -14,12 +14,33 @@ FastMCP tool server that exposes 7 expense operations as MCP-compatible endpoint
 cp .env.example .env
 ```
 
-The defaults in `.env.example` work as-is for local development. The only variable you might need to change is `EXPENSES_API_URL` if your API is running on a different address:
+Fill in the values for your environment. See the table below for all variables.
 
-```
-PORT=8124
-EXPENSES_API_URL=http://localhost:8000/api/v1
-```
+### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `8124` | Port this MCP server listens on |
+| `EXPENSES_API_URL` | `http://localhost:8000/api/v1` | URL of the expenses REST API |
+| `AUTH_REQUIRED` | `true` | Set to `false` to disable inbound auth (dev only — logs a loud warning) |
+| `AUTH_URL` | — | Auth service base URL (declared as OAuth authorization server in resource metadata) |
+| `AUTH_JWKS_URI` | — | JWKS endpoint for RS256 JWT verification |
+| `AUTH_ISSUER` | — | Expected `iss` claim in inbound JWTs |
+| `MCP_BASE_URL` | — | Public base URL of this server (used in protected-resource metadata) |
+| `MCP_CLIENT_ID` | — | `client_credentials` client ID for calling `expenses-api` |
+| `MCP_CLIENT_SECRET` | — | `client_credentials` client secret |
+| `AUTH_TOKEN_URL` | — | Token endpoint used to obtain outbound service tokens |
+
+### Authentication
+
+All `/mcp` requests require a valid RS256 JWT with `aud=expenses-mcp`, verified against `AUTH_JWKS_URI`. The `GET /health` endpoint is unauthenticated.
+
+**Acting-user resolution** (per tool call):
+- Token has `act-on-behalf` scope **and** `X-Acting-User` header present → acting user = header value
+- `X-Acting-User` present without `act-on-behalf` → request rejected (ToolError)
+- No `X-Acting-User` header → acting user = token `sub` (falls back to `client_id`)
+
+**Outbound calls** to `expenses-api` attach a `Bearer` service token (`aud=expenses-api`) obtained via `client_credentials` (cached, renewed ~60s before expiry) plus `X-Acting-User`.
 
 ## 2. Install Dependencies
 

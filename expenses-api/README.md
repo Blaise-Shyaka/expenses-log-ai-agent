@@ -29,7 +29,7 @@ docker run --rm -d \
 cp .env.example .env
 ```
 
-Then edit `.env`. Please replace the placeholder values with what you used above:
+Then edit `.env`. Replace the placeholder values with what you used above:
 
 ```
 DATABASE_URL="mysql+aiomysql://dev_user:secret@localhost:3306/expenses_dev"
@@ -37,6 +37,17 @@ ALEMBIC_URL="mysql+pymysql://dev_user:secret@localhost:3306/expenses_dev"
 ```
 
 > Both URLs point to the same database but use different drivers. `DATABASE_URL` uses `aiomysql` (async, for the app). `ALEMBIC_URL` uses `pymysql` (sync, for migrations). Both are required.
+
+Set the JWT auth variables to point to your auth service:
+
+```
+AUTH_JWKS_URI="https://auth.example.com/.well-known/jwks.json"
+AUTH_ISSUER="https://auth.example.com"
+AUTH_AUDIENCE="expenses-api"
+AUTH_REQUIRED=true
+```
+
+Set `AUTH_REQUIRED=false` to bypass authentication in local development (all requests pass through unauthenticated). Set `DEBUG=true` to re-enable `/docs`, `/redoc`, and `/openapi.json`.
 
 ## 3. Install Dependencies
 
@@ -52,7 +63,7 @@ Wait ~10 seconds for MySQL to be ready, then:
 uv run alembic upgrade head
 ```
 
-This creates the tables and seeds a test user (`00000000-0000-0000-0000-000000000001`) used by all endpoints until authentication is implemented. This will change, as soon as the authentication is completed.
+This creates the tables. A seed migration inserts a legacy test user row (`00000000-0000-0000-0000-000000000001`) that is preserved but no longer used by any endpoint.
 
 ## 5. Start the Server
 
@@ -70,7 +81,7 @@ The API is now running at `http://localhost:8000`.
 
 ## Exploring the API
 
-FastAPI generates interactive docs automatically. Once the server is running:
+Interactive docs are disabled by default. Set `DEBUG=true` in `.env` and restart to enable:
 
 | | URL |
 |---|---|
