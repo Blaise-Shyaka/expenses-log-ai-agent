@@ -48,9 +48,7 @@ class _TokenCache:
             data: dict[str, object] = response.json()
             token = data.get("access_token")
             if not isinstance(token, str) or not token:
-                raise RuntimeError(
-                    f"Token response from {token_url} missing 'access_token'"
-                )
+                raise RuntimeError(f"Token response from {token_url} missing 'access_token'")
             expires_in = data.get("expires_in", 900)
             if not isinstance(expires_in, (int, float)):
                 expires_in = 900

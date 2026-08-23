@@ -58,9 +58,7 @@ def get_all_expenses(auth_headers: dict[str, str]) -> list[ExpenseWithCategory]:
         raise
 
 
-def create_expense_category(
-    name: str, description: str, auth_headers: dict[str, str]
-) -> Category:
+def create_expense_category(name: str, description: str, auth_headers: dict[str, str]) -> Category:
     """It creates an new expense category, if it doesn't already exist.
     All expenses are recorded under a specific category.
     This helps to retrieve and record an expense category.

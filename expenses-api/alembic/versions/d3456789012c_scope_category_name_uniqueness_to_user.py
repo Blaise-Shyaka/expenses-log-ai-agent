@@ -19,9 +19,7 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.drop_index(op.f("ix_categories_name"), table_name="categories")
     op.create_index(op.f("ix_categories_name"), "categories", ["name"], unique=False)
-    op.create_unique_constraint(
-        "uq_categories_user_id_name", "categories", ["user_id", "name"]
-    )
+    op.create_unique_constraint("uq_categories_user_id_name", "categories", ["user_id", "name"])
 
 
 def downgrade() -> None:

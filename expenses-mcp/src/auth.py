@@ -35,9 +35,7 @@ def resolve_acting_user() -> str:
     """
     token = get_access_token()
     if token is None:
-        raise RuntimeError(
-            "resolve_acting_user() called without an authenticated token"
-        )
+        raise RuntimeError("resolve_acting_user() called without an authenticated token")
 
     scopes: list[str] = token.scopes
     has_act_on_behalf = _ACT_ON_BEHALF_SCOPE in scopes

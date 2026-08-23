@@ -31,9 +31,7 @@ async def create_category(
 
     user_bytes = UUID(principal.acting_user).bytes if principal.acting_user else b""
 
-    category_stmt = select(CategoryDB).where(
-        func.lower(CategoryDB.name) == category.name.lower()
-    )
+    category_stmt = select(CategoryDB).where(func.lower(CategoryDB.name) == category.name.lower())
     if principal.acting_user:
         category_stmt = category_stmt.where(CategoryDB.user_id == user_bytes)
 
@@ -79,9 +77,7 @@ async def read_category(
 
     category_stmt = select(CategoryDB).where(CategoryDB.id == category_id.bytes)
     if principal.is_authenticated and principal.acting_user:
-        category_stmt = category_stmt.where(
-            CategoryDB.user_id == UUID(principal.acting_user).bytes
-        )
+        category_stmt = category_stmt.where(CategoryDB.user_id == UUID(principal.acting_user).bytes)
 
     result = await db.execute(category_stmt)
     db_category = result.scalars().first()
@@ -100,9 +96,7 @@ async def read_category_by_name(
 
     category_stmt = select(CategoryDB).where(func.lower(CategoryDB.name) == name.lower())
     if principal.is_authenticated and principal.acting_user:
-        category_stmt = category_stmt.where(
-            CategoryDB.user_id == UUID(principal.acting_user).bytes
-        )
+        category_stmt = category_stmt.where(CategoryDB.user_id == UUID(principal.acting_user).bytes)
 
     result = await db.execute(category_stmt)
     db_category = result.scalars().first()

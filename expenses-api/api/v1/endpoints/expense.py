@@ -80,9 +80,7 @@ async def read_expense(
         .where(ExpenseDB.id == expense_id.bytes)
     )
     if principal.is_authenticated and principal.acting_user:
-        expense_stmt = expense_stmt.where(
-            ExpenseDB.user_id == UUID(principal.acting_user).bytes
-        )
+        expense_stmt = expense_stmt.where(ExpenseDB.user_id == UUID(principal.acting_user).bytes)
 
     result = await db.execute(expense_stmt)
     expense = result.scalars().first()
@@ -104,9 +102,7 @@ async def read_expenses(
     expense_stmt = select(ExpenseDB).options(selectinload(ExpenseDB.category))
 
     if principal.is_authenticated and principal.acting_user:
-        expense_stmt = expense_stmt.where(
-            ExpenseDB.user_id == UUID(principal.acting_user).bytes
-        )
+        expense_stmt = expense_stmt.where(ExpenseDB.user_id == UUID(principal.acting_user).bytes)
 
     if category_name:
         expense_stmt = (
@@ -173,9 +169,7 @@ async def get_expenses_since(
     )
 
     if principal.is_authenticated and principal.acting_user:
-        expense_stmt = expense_stmt.where(
-            ExpenseDB.user_id == UUID(principal.acting_user).bytes
-        )
+        expense_stmt = expense_stmt.where(ExpenseDB.user_id == UUID(principal.acting_user).bytes)
 
     if category_name:
         expense_stmt = expense_stmt.join(CategoryDB).filter(
