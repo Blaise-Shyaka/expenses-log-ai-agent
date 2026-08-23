@@ -88,3 +88,5 @@ Add this to your Claude Desktop config (`~/Library/Application Support/Claude/cl
 ```
 
 The expenses tools will then be available in any Claude Desktop conversation.
+
+> With `AUTH_REQUIRED=true` (the default), this connection needs a valid bearer token — Claude Desktop won't have one out of the box. Set `AUTH_REQUIRED=false` for a quick local test, or configure Claude Desktop to send an `Authorization: Bearer <token>` header.
