@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, String
+from sqlalchemy import Column, DateTime, Float, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import BINARY
 
@@ -10,17 +10,16 @@ from db.base import BaseModel
 class UserDB(BaseModel):
     __tablename__ = "users"
 
-    first_name = Column(String(255), nullable=False)
-    last_name = Column(String(255), nullable=False)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), index=True)
-    google_id = Column(String(255), index=True)
+    first_name = Column(String(255), nullable=True)
+    last_name = Column(String(255), nullable=True)
+    email = Column(String(255), unique=True, index=True, nullable=True)
 
 
 class CategoryDB(BaseModel):
     __tablename__ = "categories"
+    __table_args__ = (UniqueConstraint("user_id", "name", name="uq_categories_user_id_name"),)
 
-    name = Column(String(255), unique=True, index=True)
+    name = Column(String(255), index=True)
     description = Column(String(500), nullable=True)
     user_id = Column(BINARY(16), ForeignKey("users.id"), nullable=False)
 

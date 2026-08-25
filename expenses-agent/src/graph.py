@@ -10,27 +10,26 @@ from langgraph.prebuilt import ToolNode, tools_condition  # type: ignore[import-
 from .agent_state import ExpensesAgentState
 from .llm import get_active_llm
 from .mcp_client import MCP_URL, wait_for_mcp
+from .mcp_interceptor import AuthHeaderInterceptor
 from .nodes import llm_node, set_active_llm
+from .token_client import get_service_token
 
 
 @asynccontextmanager
 async def make_graph() -> AsyncGenerator[CompiledStateGraph]:  # type: ignore[type-arg]
-    """
-    Async factory for the LangGraph agent graph.
-
-    Used by both:
-    - `langgraph dev` (pointed to via langgraph.json)
-    - FastAPI lifespan (imported directly in main.py)
-    """
     await wait_for_mcp(MCP_URL)
+
+    startup_token = await get_service_token()
 
     client = MultiServerMCPClient(  # type: ignore[call-arg]
         {
             "expenses": {
                 "transport": "streamable_http",
                 "url": f"{MCP_URL}/mcp",
+                "headers": {"Authorization": f"Bearer {startup_token}"},
             }
-        }
+        },
+        tool_interceptors=[AuthHeaderInterceptor()],
     )
     tools = await client.get_tools()
 

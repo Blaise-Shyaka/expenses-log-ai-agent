@@ -1,5 +1,7 @@
 .idea
 .env
+signing.key
+__debug_bin*
 *.pyc
 *.pyo
 __pycache__/
@@ -53,3 +55,4 @@ yarn-error.log*
 next-env.d.ts
 .next
 openspec/
+.claude

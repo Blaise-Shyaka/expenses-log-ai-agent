@@ -30,10 +30,11 @@ There are already default categories, but you can edit or add more. If you'd pre
 
 ## Architecture
 
-Four services, each with its own README:
+Five services, each with its own README:
 
 | Service | Description | README |
 |---|---|---|
+| **expenses-auth** | Go service that issues and verifies JWTs (user login + service-to-service tokens) | [README](./expenses-auth/README.md) |
 | **expenses-api** | FastAPI REST API that stores and queries expenses via MySQL | [README](./expenses-api/README.md) |
 | **expenses-mcp** | MCP server that exposes expense tools to the agent | [README](./expenses-mcp/README.md) |
 | **expenses-agent** | LangGraph AI agent that understands messages and calls MCP tools | [README](./expenses-agent/README.md) |
@@ -42,26 +43,42 @@ Four services, each with its own README:
 ### Request Flow
 
 ```
-User types message
+User visits UI, not yet logged in
+      │
+      ▼
+  UI (port 3000)
+  Next.js middleware redirects to /login
+      │  POST AUTH_SERVICE_URL/login
+      ▼
+  expenses-auth (port 8001)
+  verifies credentials, issues JWT access + refresh tokens
+      │  tokens stored in an encrypted httpOnly cookie (Auth.js)
+      ▼
+  User types message
       │
       ▼
   UI (port 3000)
   CopilotChat component
-      │  POST /api/copilotkit  (Next.js route handler)
+      │  POST /api/copilotkit  (Next.js route handler, injects Bearer access token)
       ▼
   UI route handler
   proxies AG-UI streaming request
-      │  POST / (AG-UI protocol)
+      │  POST / (AG-UI protocol, Authorization: Bearer <jwt>)
       ▼
   Expenses Agent (port 8123)
+  verifies JWT against Auth Service JWKS, then:
   LangGraph: llm_node → [tool call?] → llm_node
-      │  executes tool (loaded from MCP at startup)
+      │  executes tool (loaded from MCP at startup), attaches its own service token
       ▼
   Tool makes HTTP call
-      │  HTTP to /api/v1/...
+      │  POST /mcp (Authorization: Bearer <service token>, X-Acting-User: <user id>)
+      ▼
+  Expenses MCP (port 8124)
+  verifies JWT against Auth Service JWKS, resolves acting user, then:
+      │  HTTP to /api/v1/... (Authorization: Bearer <service token>)
       ▼
   Expenses API (port 8000)
-  FastAPI REST endpoints
+  verifies JWT against Auth Service JWKS, scopes query to acting user
       │  async SQLAlchemy
       ▼
   MySQL (port 3306)
@@ -73,6 +90,8 @@ User types message
 ```
 
 > **Note on MCP:** The agent connects to the MCP server (`expenses-mcp`, port 8124) once at startup to load its tools. During a conversation, tool calls execute in-process — the agent does not make a round-trip to the MCP server per message.
+
+> **Note on auth:** Each of `expenses-api`, `expenses-mcp`, and `expenses-agent` can run with `AUTH_REQUIRED=false` for local development without standing up `expenses-auth` — see the individual READMEs. The UI always requires it (there's no bypass for the login redirect).
 
 The agent can use either [DeepSeek](https://platform.deepseek.com) (cloud) or [Ollama](https://ollama.com) (local) as its LLM, controlled by a single environment variable.
 
@@ -87,7 +106,8 @@ cd expenses-log-ai-agent
 
 Then follow each service's README in order:
 
-1. [expenses-api](./expenses-api/README.md) — start MySQL and the REST API first
-2. [expenses-mcp](./expenses-mcp/README.md) — start the MCP tool server (depends on the API)
-3. [expenses-agent](./expenses-agent/README.md) — start the agent (depends on the MCP server)
-4. [ui](./ui/README.md) — start the chat interface last
+1. [expenses-auth](./expenses-auth/README.md) — start the auth service first (or set `AUTH_REQUIRED=false` in every other service below to skip it)
+2. [expenses-api](./expenses-api/README.md) — start MySQL and the REST API
+3. [expenses-mcp](./expenses-mcp/README.md) — start the MCP tool server (depends on the API)
+4. [expenses-agent](./expenses-agent/README.md) — start the agent (depends on the MCP server)
+5. [ui](./ui/README.md) — start the chat interface last

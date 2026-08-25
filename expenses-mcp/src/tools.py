@@ -26,7 +26,7 @@ def _serialize_datetime(value: datetime | None) -> str | None:
 
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)  # Worth moving
 
 EXPENSES_API_URL = environ.get("EXPENSES_API_URL", "http://localhost:8000/api/v1")
 
@@ -44,13 +44,13 @@ session.mount("http://", adapter)
 session.mount("https://", adapter)
 
 
-def get_all_expenses() -> list[ExpenseWithCategory]:
+def get_all_expenses(auth_headers: dict[str, str]) -> list[ExpenseWithCategory]:
     """It retrieves all expenses a user has recorded.
     The number retrieved is just the first 100 entries.
     """
     url = EXPENSES_API_URL + "/expenses/"
     try:
-        response = session.get(url)
+        response = session.get(url, headers=auth_headers)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -58,7 +58,7 @@ def get_all_expenses() -> list[ExpenseWithCategory]:
         raise
 
 
-def create_expense_category(name: str, description: str) -> Category:
+def create_expense_category(name: str, description: str, auth_headers: dict[str, str]) -> Category:
     """It creates an new expense category, if it doesn't already exist.
     All expenses are recorded under a specific category.
     This helps to retrieve and record an expense category.
@@ -70,7 +70,7 @@ def create_expense_category(name: str, description: str) -> Category:
     url = EXPENSES_API_URL + "/categories/"
     payload = {"name": name, "description": description}
     try:
-        response = session.post(url, json=payload)
+        response = session.post(url, json=payload, headers=auth_headers)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -78,11 +78,11 @@ def create_expense_category(name: str, description: str) -> Category:
         raise
 
 
-def get_all_categories() -> list[Category]:
+def get_all_categories(auth_headers: dict[str, str]) -> list[Category]:
     """It retrieves all categories. It retrieves the first 100 entries."""
     url = EXPENSES_API_URL + "/categories/"
     try:
-        response = session.get(url)
+        response = session.get(url, headers=auth_headers)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -90,7 +90,7 @@ def get_all_categories() -> list[Category]:
         raise
 
 
-def get_category_by_name(name: str) -> Category:
+def get_category_by_name(name: str, auth_headers: dict[str, str]) -> Category:
     """It retrieves a category by name.
 
     Parameters:
@@ -98,7 +98,7 @@ def get_category_by_name(name: str) -> Category:
     """
     url = EXPENSES_API_URL + "/categories/name/" + name
     try:
-        response = session.get(url)
+        response = session.get(url, headers=auth_headers)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -106,7 +106,13 @@ def get_category_by_name(name: str) -> Category:
         raise
 
 
-def create_expense(amount: float, description: str, date: datetime, category_name: str) -> Expense:
+def create_expense(
+    amount: float,
+    description: str,
+    date: datetime,
+    category_name: str,
+    auth_headers: dict[str, str],
+) -> Expense:
     """It records a new expense.
 
     Parameters:
@@ -126,7 +132,7 @@ def create_expense(amount: float, description: str, date: datetime, category_nam
         "category_name": category_name,
     }
     try:
-        response = session.post(url, json=payload)
+        response = session.post(url, json=payload, headers=auth_headers)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -134,7 +140,7 @@ def create_expense(amount: float, description: str, date: datetime, category_nam
         raise
 
 
-def get_expenses_by_category() -> list[CategoryWithTotal]:
+def get_expenses_by_category(auth_headers: dict[str, str]) -> list[CategoryWithTotal]:
     """
     Retrieves the total amount of expenses recorded by a user, grouped by category.
 
@@ -143,7 +149,7 @@ def get_expenses_by_category() -> list[CategoryWithTotal]:
     """
     url = EXPENSES_API_URL + "/expenses/totals/by-category/"
     try:
-        response = session.get(url)
+        response = session.get(url, headers=auth_headers)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -152,7 +158,10 @@ def get_expenses_by_category() -> list[CategoryWithTotal]:
 
 
 def get_expenses_since(
-    days: int | None, start_date: datetime | None, category_name: str | None
+    days: int | None,
+    start_date: datetime | None,
+    category_name: str | None,
+    auth_headers: dict[str, str],
 ) -> ExpenseTotalResponse:
     """
     Retrieves the total amount of expenses since a specified time period.
@@ -183,7 +192,7 @@ def get_expenses_since(
         params["category_name"] = category_name
 
     try:
-        response = session.get(url, params=params)
+        response = session.get(url, params=params, headers=auth_headers)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:

@@ -8,13 +8,19 @@ Run standalone (from expenses-mcp/):
 The agent (main.py) does NOT start this process — they run as separate processes.
 """
 
+import logging
 from datetime import datetime
+from os import environ
 
 from dotenv import load_dotenv
 from fastmcp import FastMCP
+from fastmcp.server.auth import JWTVerifier, RemoteAuthProvider
+from pydantic import AnyHttpUrl
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from .auth import resolve_acting_user
+from .token_client import svc_token_client
 from .tools import (
     create_expense as _create_expense,
 )
@@ -46,7 +52,32 @@ from .types import (
 
 load_dotenv()
 
-mcp: FastMCP = FastMCP("expenses-tools")  # type: ignore[call-arg]
+logger = logging.getLogger(__name__)
+
+_AUTH_REQUIRED = environ.get("AUTH_REQUIRED", "true").lower() not in ("false", "0", "no")
+_AUTH_URL = environ.get("AUTH_URL", "http://localhost:8001")
+_AUTH_JWKS_URI = environ.get("AUTH_JWKS_URI", "")
+_AUTH_ISSUER = environ.get("AUTH_ISSUER", "")
+_MCP_BASE_URL = environ.get("MCP_BASE_URL", "")
+
+if _AUTH_REQUIRED:
+    _jwt_verifier: JWTVerifier = JWTVerifier(  # type: ignore[assignment]
+        jwks_uri=_AUTH_JWKS_URI,
+        issuer=_AUTH_ISSUER,
+        audience="expenses-mcp",
+    )
+    _auth_provider: RemoteAuthProvider = RemoteAuthProvider(  # type: ignore[assignment]
+        token_verifier=_jwt_verifier,
+        authorization_servers=[AnyHttpUrl(_AUTH_URL)],
+        base_url=AnyHttpUrl(_MCP_BASE_URL),
+    )
+    mcp: FastMCP = FastMCP("expenses-tools", auth=_auth_provider)  # type: ignore[call-arg]
+else:
+    logger.warning(
+        "AUTH_REQUIRED=false — MCP server running WITHOUT bearer authentication. "
+        "Do NOT use this setting in production."
+    )
+    mcp = FastMCP("expenses-tools")  # type: ignore[call-arg]
 
 
 @mcp.custom_route("/health", methods=["GET"])  # type: ignore[misc]
@@ -59,7 +90,9 @@ async def get_all_expenses() -> list[ExpenseWithCategory]:
     """It retrieves all expenses a user has recorded.
     The number retrieved is just the first 100 entries.
     """
-    return _get_all_expenses()
+    acting_user = resolve_acting_user()
+    auth_headers = await svc_token_client.build_headers(acting_user)
+    return _get_all_expenses(auth_headers)
 
 
 @mcp.tool  # type: ignore[misc]
@@ -72,13 +105,17 @@ async def create_expense_category(name: str, description: str) -> Category:
       name (str) - The category name
       description (str) - The category description. It is optional.
     """
-    return _create_expense_category(name, description)
+    acting_user = resolve_acting_user()
+    auth_headers = await svc_token_client.build_headers(acting_user)
+    return _create_expense_category(name, description, auth_headers)
 
 
 @mcp.tool  # type: ignore[misc]
 async def get_all_categories() -> list[Category]:
     """It retrieves all categories. It retrieves the first 100 entries."""
-    return _get_all_categories()
+    acting_user = resolve_acting_user()
+    auth_headers = await svc_token_client.build_headers(acting_user)
+    return _get_all_categories(auth_headers)
 
 
 @mcp.tool  # type: ignore[misc]
@@ -88,7 +125,9 @@ async def get_category_by_name(name: str) -> Category:
     Parameters:
       name (str) - the category name
     """
-    return _get_category_by_name(name)
+    acting_user = resolve_acting_user()
+    auth_headers = await svc_token_client.build_headers(acting_user)
+    return _get_category_by_name(name, auth_headers)
 
 
 @mcp.tool  # type: ignore[misc]
@@ -106,7 +145,9 @@ async def create_expense(
         It could be an existing or a new category. Please guess the category
         based on existing ones, if not, propose one.
     """
-    return _create_expense(amount, description, date, category_name)
+    acting_user = resolve_acting_user()
+    auth_headers = await svc_token_client.build_headers(acting_user)
+    return _create_expense(amount, description, date, category_name, auth_headers)
 
 
 @mcp.tool  # type: ignore[misc]
@@ -117,7 +158,9 @@ async def get_expenses_by_category() -> list[CategoryWithTotal]:
     Note: If the user specifies a specific time period, use the get_expenses_since
     tool internally instead. Do not mention this tool to the user.
     """
-    return _get_expenses_by_category()
+    acting_user = resolve_acting_user()
+    auth_headers = await svc_token_client.build_headers(acting_user)
+    return _get_expenses_by_category(auth_headers)
 
 
 @mcp.tool  # type: ignore[misc]
@@ -143,4 +186,6 @@ async def get_expenses_since(
       Object containing total expense amount plus the query parameters used
       (start_date, days, category_name).
     """
-    return _get_expenses_since(days, start_date, category_name)
+    acting_user = resolve_acting_user()
+    auth_headers = await svc_token_client.build_headers(acting_user)
+    return _get_expenses_since(days, start_date, category_name, auth_headers)

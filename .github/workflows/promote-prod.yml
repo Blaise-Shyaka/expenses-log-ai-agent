@@ -1,0 +1,93 @@
+# Triggers when a GitHub Release is published. Never rebuilds — it re-tags
+# the :sha-<short-sha> image already built by build-dev.yml for that exact
+# commit as the release version, then points each prod resource at it.
+#
+# The release must be cut from a commit that already went through a
+# successful build-dev.yml run on main, since that's what publishes the
+# :sha-<short-sha> image this workflow promotes.
+#
+# Required secrets:
+#   COOLIFY_TOKEN                 repo-level (shared with build-dev.yml,
+#                                 needs "deploy" + "write" scope)
+#
+#   In the "prod" GitHub Environment:
+#   COOLIFY_URL                   (e.g. https://coolify.example.com)
+#   COOLIFY_APP_UUID_EXPENSES_AUTH
+#   COOLIFY_APP_UUID_EXPENSES_API
+#   COOLIFY_APP_UUID_EXPENSES_MCP
+#   COOLIFY_APP_UUID_EXPENSES_AGENT
+#   COOLIFY_APP_UUID_UI
+
+name: Promote to prod
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: promote-prod-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment: prod
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: expenses-auth
+            uuid_secret: COOLIFY_APP_UUID_EXPENSES_AUTH
+          - service: expenses-api
+            uuid_secret: COOLIFY_APP_UUID_EXPENSES_API
+          - service: expenses-mcp
+            uuid_secret: COOLIFY_APP_UUID_EXPENSES_MCP
+          - service: expenses-agent
+            uuid_secret: COOLIFY_APP_UUID_EXPENSES_AGENT
+          - service: ui
+            uuid_secret: COOLIFY_APP_UUID_UI
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: vars
+        run: |
+          echo "version=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          echo "sha_short=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Promote dev image to release tag
+        run: |
+          docker buildx imagetools create \
+            --tag ghcr.io/blaise-shyaka/${{ matrix.service }}:${{ steps.vars.outputs.version }} \
+            ghcr.io/blaise-shyaka/${{ matrix.service }}:sha-${{ steps.vars.outputs.sha_short }}
+
+      - name: Point Coolify at the release tag
+        env:
+          UUID: ${{ secrets[matrix.uuid_secret] }}
+        run: |
+          curl --fail --silent --show-error --request PATCH \
+            "${{ secrets.COOLIFY_URL }}/api/v1/applications/${UUID}" \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            --header "Content-Type: application/json" \
+            --data "{\"docker_image_tag\": \"${{ steps.vars.outputs.version }}\"}"
+
+      - name: Trigger Coolify prod deploy
+        env:
+          UUID: ${{ secrets[matrix.uuid_secret] }}
+        run: |
+          curl --fail --silent --show-error --request POST \
+            "${{ secrets.COOLIFY_URL }}/api/v1/deploy?uuid=${UUID}" \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
