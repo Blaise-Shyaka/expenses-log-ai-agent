@@ -63,6 +63,29 @@ jobs:
       - name: Pyright
         run: uv run pyright .
 
+  expenses-auth:
+    name: expenses-auth
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: expenses-auth
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: gofmt
+        run: test -z "$(gofmt -l .)"
+
+      - name: go vet
+        run: go vet ./...
+
   expenses-mcp:
     name: expenses-mcp
     runs-on: ubuntu-latest

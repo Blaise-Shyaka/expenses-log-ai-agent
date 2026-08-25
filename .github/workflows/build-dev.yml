@@ -1,0 +1,95 @@
+# Triggers on every merge to main. Builds only the services whose directory
+# changed, pushes :dev and :sha-<short-sha> to GHCR, then tells Coolify to
+# redeploy the dev resource for that service.
+#
+# Required secrets:
+#   COOLIFY_TOKEN                 repo-level (shared with promote-prod.yml,
+#                                 needs "deploy" + "write" scope)
+#
+#   In the "dev" GitHub Environment:
+#   COOLIFY_WEBHOOK_EXPENSES_AUTH
+#   COOLIFY_WEBHOOK_EXPENSES_API
+#   COOLIFY_WEBHOOK_EXPENSES_MCP
+#   COOLIFY_WEBHOOK_EXPENSES_AGENT
+#   COOLIFY_WEBHOOK_UI
+
+name: Build & deploy (dev)
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: build-dev-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.result }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            expenses-auth:
+              - 'expenses-auth/**'
+            expenses-api:
+              - 'expenses-api/**'
+            expenses-mcp:
+              - 'expenses-mcp/**'
+            expenses-agent:
+              - 'expenses-agent/**'
+            ui:
+              - 'ui/**'
+
+      - name: Build matrix from changed services
+        id: matrix
+        env:
+          CHANGED: ${{ steps.filter.outputs.changes }}
+        run: |
+          MAP='{"expenses-auth":"EXPENSES_AUTH","expenses-api":"EXPENSES_API","expenses-mcp":"EXPENSES_MCP","expenses-agent":"EXPENSES_AGENT","ui":"UI"}'
+          RESULT=$(echo "$CHANGED" | jq -c --argjson map "$MAP" '[.[] | {service: ., secret_key: $map[.]}]')
+          echo "result=$RESULT" >> "$GITHUB_OUTPUT"
+
+  build-and-deploy:
+    needs: changes
+    if: needs.changes.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    environment: dev
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.changes.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: vars
+        run: echo "sha_short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: |
+            ghcr.io/blaise-shyaka/${{ matrix.service }}:dev
+            ghcr.io/blaise-shyaka/${{ matrix.service }}:sha-${{ steps.vars.outputs.sha_short }}
+
+      - name: Trigger Coolify dev deploy
+        run: |
+          curl --fail --silent --show-error --request GET \
+            "${{ secrets[format('COOLIFY_WEBHOOK_{0}', matrix.secret_key)] }}" \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"

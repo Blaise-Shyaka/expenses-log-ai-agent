@@ -1,6 +1,6 @@
 "use server";
 
-import { register } from "@/lib/auth-service-client";
+import { register } from "@/lib/expenses-auth-client";
 
 export type ActionState = { error: string } | null;
 

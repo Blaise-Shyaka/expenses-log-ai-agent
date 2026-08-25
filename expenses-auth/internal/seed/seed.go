@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/crypto/argon2"
 
-	"github.com/blaise/momo-expenses/auth-service/internal/store"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/store"
 )
 
 type MachineClientConfig struct {
@@ -29,11 +29,11 @@ func MachineClients(st store.Store, clients []MachineClientConfig) error {
 			return fmt.Errorf("hash secret for %q: %w", cfg.ClientID, err)
 		}
 		err = st.CreateMachineClient(store.MachineClient{
-			ClientID:  cfg.ClientID,
+			ClientID:   cfg.ClientID,
 			SecretHash: hash,
-			Audience:  cfg.Audience,
-			Scopes:    cfg.Scopes,
-			CreatedAt: time.Now().UTC(),
+			Audience:   cfg.Audience,
+			Scopes:     cfg.Scopes,
+			CreatedAt:  time.Now().UTC(),
 		})
 		if err != nil && !errors.Is(err, store.ErrDuplicate) {
 			return fmt.Errorf("create machine client %q: %w", cfg.ClientID, err)

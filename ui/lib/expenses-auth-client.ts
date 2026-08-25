@@ -48,8 +48,8 @@ export async function login(
 }
 
 /**
- * auth-service rotates refresh tokens on every use and permanently rejects
- * reuse of an already-rotated one (by design — see auth-service's README).
+ * expenses-auth rotates refresh tokens on every use and permanently rejects
+ * reuse of an already-rotated one (by design — see expenses-auth's README).
  * Because Next.js can fire multiple requests that each independently resolve
  * the session in quick succession (page navigation + asset fetches + the
  * CopilotKit ping all call auth() around the same time), more than one of
@@ -58,7 +58,7 @@ export async function login(
  * other request holding that same token would otherwise get a 401 even
  * though the session is perfectly valid. This cache makes repeat callers
  * within a short window share the winner's result instead of re-hitting
- * auth-service with a token that's already been consumed.
+ * expenses-auth with a token that's already been consumed.
  */
 const recentRefreshes = new Map<string, { result: Promise<AuthTokens>; expiresAt: number }>();
 const REFRESH_DEDUP_WINDOW_MS = 10_000;

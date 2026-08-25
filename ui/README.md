@@ -36,7 +36,7 @@ npx auth secret
 2. The login form calls `POST /api/auth/[...nextauth]` (Auth.js) server-side, which exchanges credentials with the Go auth service (`POST AUTH_SERVICE_URL/login`) and stores the resulting JWT pair in an encrypted httpOnly cookie — the browser never sees a raw token.
 3. On subsequent requests the Auth.js `jwt` callback transparently refreshes expired tokens via `POST AUTH_SERVICE_URL/oauth/token` (refresh_token grant) before handing control back.
 
-> **Naming note:** the auth-service base URL is deliberately `AUTH_SERVICE_URL`, not `AUTH_URL`. Auth.js v5 reserves `AUTH_URL` for itself (it overrides the app's own canonical origin when set — see `next-auth/lib/env.js`), so reusing that name here would make Auth.js think the UI app itself lives at the auth-service's address, sending all its internal redirects there instead.
+> **Naming note:** the expenses-auth base URL is deliberately `AUTH_SERVICE_URL`, not `AUTH_URL`. Auth.js v5 reserves `AUTH_URL` for itself (it overrides the app's own canonical origin when set — see `next-auth/lib/env.js`), so reusing that name here would make Auth.js think the UI app itself lives at the expenses-auth's address, sending all its internal redirects there instead.
 4. Every chat request to `/api/copilotkit` reads the session server-side, injects a fresh `Authorization: Bearer <access_token>` header onto the inbound request, and lets the CopilotKit runtime forward it to the agent — no client-side token exposure.
 
 ## 2. Install Dependencies

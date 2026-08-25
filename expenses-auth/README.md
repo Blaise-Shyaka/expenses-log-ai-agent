@@ -1,4 +1,4 @@
-# auth-service
+# expenses-auth
 
 Standalone Go authentication service. Port 8001.
 

@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/blaise/momo-expenses/auth-service/internal/keys"
-	"github.com/blaise/momo-expenses/auth-service/internal/seed"
-	"github.com/blaise/momo-expenses/auth-service/internal/server"
-	"github.com/blaise/momo-expenses/auth-service/internal/store"
-	"github.com/blaise/momo-expenses/auth-service/internal/tokens"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/keys"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/seed"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/server"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/store"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/tokens"
 )
 
 func main() {
@@ -89,7 +89,7 @@ func main() {
 	handler := server.New(st, km, minter)
 
 	addr := ":" + port
-	log.Printf("auth-service listening on %s", addr)
+	log.Printf("expenses-auth listening on %s", addr)
 	if err := http.ListenAndServe(addr, handler); err != nil {
 		log.Fatalf("serve: %v", err)
 	}

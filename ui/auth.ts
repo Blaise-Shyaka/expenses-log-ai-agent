@@ -1,6 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { login, refreshTokens } from "@/lib/auth-service-client";
+import { login, refreshTokens } from "@/lib/expenses-auth-client";
 
 // Refresh a bit before the access token actually expires, not after — the
 // client schedules its own proactive refresh off accessTokenExpires (see

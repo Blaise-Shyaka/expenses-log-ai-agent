@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/blaise/momo-expenses/auth-service/internal/store"
-	"github.com/blaise/momo-expenses/auth-service/internal/tokens"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/store"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/tokens"
 )
 
 type tokenResponse struct {

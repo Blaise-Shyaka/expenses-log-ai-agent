@@ -8,10 +8,10 @@ import (
 
 // Sentinel errors.
 var (
-	ErrNotFound      = errors.New("not found")
-	ErrDuplicate     = errors.New("duplicate")
-	ErrExpired       = errors.New("expired")
-	ErrRevoked       = errors.New("revoked")
+	ErrNotFound  = errors.New("not found")
+	ErrDuplicate = errors.New("duplicate")
+	ErrExpired   = errors.New("expired")
+	ErrRevoked   = errors.New("revoked")
 )
 
 // User represents a registered human user.
@@ -26,19 +26,19 @@ type User struct {
 
 // RefreshToken represents a stored (hashed) refresh token.
 type RefreshToken struct {
-	TokenHash string    // SHA-256 of the raw token, hex-encoded
-	UserID    string    // associated user UUID
+	TokenHash string // SHA-256 of the raw token, hex-encoded
+	UserID    string // associated user UUID
 	ExpiresAt time.Time
 	Revoked   bool
 }
 
 // MachineClient represents an OAuth2 machine client (for Part B).
 type MachineClient struct {
-	ClientID     string
-	SecretHash   string // argon2id hash of the secret
-	Audience     string
-	Scopes       string // space-delimited
-	CreatedAt    time.Time
+	ClientID   string
+	SecretHash string // argon2id hash of the secret
+	Audience   string
+	Scopes     string // space-delimited
+	CreatedAt  time.Time
 }
 
 // Store is the persistence interface for the auth service.

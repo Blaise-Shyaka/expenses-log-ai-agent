@@ -11,7 +11,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 COPY . .
 RUN --mount=type=cache,target=/go/pkg/mod \
   --mount=type=cache,target=/root/.cache/go-build \
-  CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/auth-service .
+  CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /out/expenses-auth .
 
 # Runtime
 FROM alpine
@@ -19,7 +19,7 @@ FROM alpine
 RUN apk add --no-cache ca-certificates
 RUN addgroup -S nonrootgroup && adduser -S nonroot -G nonrootgroup
 
-COPY --from=builder --chown=nonroot:nonrootgroup /out/auth-service /code/auth-service
+COPY --from=builder --chown=nonroot:nonrootgroup /out/expenses-auth /code/expenses-auth
 
 USER nonroot
 
@@ -27,4 +27,4 @@ WORKDIR /code
 
 EXPOSE 8001
 
-CMD ["./auth-service"]
+CMD ["./expenses-auth"]

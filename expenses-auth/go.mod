@@ -1,4 +1,4 @@
-module github.com/blaise/momo-expenses/auth-service
+module github.com/blaise/momo-expenses/expenses-auth
 
 go 1.25.0
 

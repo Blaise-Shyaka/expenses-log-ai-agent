@@ -12,8 +12,8 @@ import (
 
 	"golang.org/x/crypto/argon2"
 
-	"github.com/blaise/momo-expenses/auth-service/internal/store"
-	"github.com/blaise/momo-expenses/auth-service/internal/tokens"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/store"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/tokens"
 )
 
 type LoginRequest struct {

@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/crypto/argon2"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"golang.org/x/crypto/argon2"
 
 	"github.com/google/uuid"
 
-	"github.com/blaise/momo-expenses/auth-service/internal/store"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/store"
 )
 
 type RegisterRequest struct {

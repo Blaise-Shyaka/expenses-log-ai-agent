@@ -137,5 +137,5 @@ func persistKey(path string, key *rsa.PrivateKey) error {
 }
 
 func (m *Manager) PrivateKey() *rsa.PrivateKey { return m.privateKey }
-func (m *Manager) KID() string                  { return m.kid }
-func (m *Manager) PublicJWKS() jwk.Set          { return m.publicJWKS }
+func (m *Manager) KID() string                 { return m.kid }
+func (m *Manager) PublicJWKS() jwk.Set         { return m.publicJWKS }

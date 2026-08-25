@@ -34,7 +34,7 @@ Five services, each with its own README:
 
 | Service | Description | README |
 |---|---|---|
-| **auth-service** | Go service that issues and verifies JWTs (user login + service-to-service tokens) | [README](./auth-service/README.md) |
+| **expenses-auth** | Go service that issues and verifies JWTs (user login + service-to-service tokens) | [README](./expenses-auth/README.md) |
 | **expenses-api** | FastAPI REST API that stores and queries expenses via MySQL | [README](./expenses-api/README.md) |
 | **expenses-mcp** | MCP server that exposes expense tools to the agent | [README](./expenses-mcp/README.md) |
 | **expenses-agent** | LangGraph AI agent that understands messages and calls MCP tools | [README](./expenses-agent/README.md) |
@@ -50,7 +50,7 @@ User visits UI, not yet logged in
   Next.js middleware redirects to /login
       │  POST AUTH_SERVICE_URL/login
       ▼
-  Auth Service (port 8001)
+  expenses-auth (port 8001)
   verifies credentials, issues JWT access + refresh tokens
       │  tokens stored in an encrypted httpOnly cookie (Auth.js)
       ▼
@@ -91,7 +91,7 @@ User visits UI, not yet logged in
 
 > **Note on MCP:** The agent connects to the MCP server (`expenses-mcp`, port 8124) once at startup to load its tools. During a conversation, tool calls execute in-process — the agent does not make a round-trip to the MCP server per message.
 
-> **Note on auth:** Each of `expenses-api`, `expenses-mcp`, and `expenses-agent` can run with `AUTH_REQUIRED=false` for local development without standing up `auth-service` — see the individual READMEs. The UI always requires it (there's no bypass for the login redirect).
+> **Note on auth:** Each of `expenses-api`, `expenses-mcp`, and `expenses-agent` can run with `AUTH_REQUIRED=false` for local development without standing up `expenses-auth` — see the individual READMEs. The UI always requires it (there's no bypass for the login redirect).
 
 The agent can use either [DeepSeek](https://platform.deepseek.com) (cloud) or [Ollama](https://ollama.com) (local) as its LLM, controlled by a single environment variable.
 
@@ -106,7 +106,7 @@ cd expenses-log-ai-agent
 
 Then follow each service's README in order:
 
-1. [auth-service](./auth-service/README.md) — start the auth service first (or set `AUTH_REQUIRED=false` in every other service below to skip it)
+1. [expenses-auth](./expenses-auth/README.md) — start the auth service first (or set `AUTH_REQUIRED=false` in every other service below to skip it)
 2. [expenses-api](./expenses-api/README.md) — start MySQL and the REST API
 3. [expenses-mcp](./expenses-mcp/README.md) — start the MCP tool server (depends on the API)
 4. [expenses-agent](./expenses-agent/README.md) — start the agent (depends on the MCP server)

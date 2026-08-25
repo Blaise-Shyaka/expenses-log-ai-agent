@@ -16,11 +16,11 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 
-	"github.com/blaise/momo-expenses/auth-service/internal/keys"
-	"github.com/blaise/momo-expenses/auth-service/internal/seed"
-	"github.com/blaise/momo-expenses/auth-service/internal/server"
-	"github.com/blaise/momo-expenses/auth-service/internal/store"
-	"github.com/blaise/momo-expenses/auth-service/internal/tokens"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/keys"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/seed"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/server"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/store"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/tokens"
 )
 
 type testEnv struct {

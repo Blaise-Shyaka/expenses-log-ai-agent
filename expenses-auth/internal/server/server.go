@@ -3,10 +3,10 @@ package server
 import (
 	"net/http"
 
-	"github.com/blaise/momo-expenses/auth-service/internal/handlers"
-	"github.com/blaise/momo-expenses/auth-service/internal/keys"
-	"github.com/blaise/momo-expenses/auth-service/internal/store"
-	"github.com/blaise/momo-expenses/auth-service/internal/tokens"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/handlers"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/keys"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/store"
+	"github.com/blaise/momo-expenses/expenses-auth/internal/tokens"
 )
 
 func New(st store.Store, km *keys.Manager, minter *tokens.Minter) http.Handler {
