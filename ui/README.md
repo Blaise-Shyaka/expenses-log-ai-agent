@@ -14,13 +14,13 @@ Next.js chat interface powered by [CopilotKit](https://docs.copilotkit.ai). Talk
 cp .env.example .env
 ```
 
-Set the required variables:
+### Environment Variables
 
-```
-AGENT_URL=http://localhost:8123      # URL of the expenses agent
-AUTH_SERVICE_URL=http://localhost:8001  # URL of the Go auth service
-AUTH_SECRET=<generated-secret>       # Cookie-encryption secret for Auth.js
-```
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `AGENT_URL` | No | `http://localhost:8123` | URL of the expenses agent |
+| `AUTH_SERVICE_URL` | No | `http://localhost:8001` | URL of the Go auth service (`expenses-auth`) |
+| `AUTH_SECRET` | **Yes** | _(none)_ | Cookie-encryption secret for Auth.js. There's no bypass for the login redirect — Auth.js throws without it. |
 
 Generate `AUTH_SECRET`:
 

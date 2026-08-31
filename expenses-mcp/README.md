@@ -18,18 +18,18 @@ Fill in the values for your environment. See the table below for all variables.
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|---|---|---|
-| `PORT` | `8124` | Port this MCP server listens on |
-| `EXPENSES_API_URL` | `http://localhost:8000/api/v1` | URL of the expenses REST API |
-| `AUTH_REQUIRED` | `true` | Set to `false` to disable inbound auth (dev only — logs a loud warning) |
-| `AUTH_URL` | — | Auth service base URL (declared as OAuth authorization server in resource metadata) |
-| `AUTH_JWKS_URI` | — | JWKS endpoint for RS256 JWT verification |
-| `AUTH_ISSUER` | — | Expected `iss` claim in inbound JWTs |
-| `MCP_BASE_URL` | — | Public base URL of this server (used in protected-resource metadata) |
-| `MCP_CLIENT_ID` | — | `client_credentials` client ID for calling `expenses-api` |
-| `MCP_CLIENT_SECRET` | — | `client_credentials` client secret |
-| `AUTH_TOKEN_URL` | — | Token endpoint used to obtain outbound service tokens |
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `PORT` | No | `8124` | Port this MCP server listens on |
+| `EXPENSES_API_URL` | No | `http://localhost:8000/api/v1` | URL of the expenses REST API |
+| `AUTH_REQUIRED` | No | `true` | Set to `false` to disable inbound auth (dev only — logs a loud warning) |
+| `AUTH_URL` | Only if `AUTH_REQUIRED=true` | `http://localhost:8001` | Auth service base URL (declared as OAuth authorization server in resource metadata) |
+| `AUTH_JWKS_URI` | Only if `AUTH_REQUIRED=true` | _(none)_ | JWKS endpoint for RS256 JWT verification. Empty value fails server startup when auth is required. |
+| `AUTH_ISSUER` | Only if `AUTH_REQUIRED=true` | _(none)_ | Expected `iss` claim in inbound JWTs |
+| `MCP_BASE_URL` | Only if `AUTH_REQUIRED=true` | _(none)_ | Public base URL of this server (used in protected-resource metadata). Empty value fails server startup when auth is required. |
+| `MCP_CLIENT_ID` | **Yes** | _(none)_ | `client_credentials` client ID for calling `expenses-api`. Used on every tool call regardless of `AUTH_REQUIRED` — missing it raises a `RuntimeError` the first time a tool runs. |
+| `MCP_CLIENT_SECRET` | **Yes** | _(none)_ | `client_credentials` client secret. Same failure mode as `MCP_CLIENT_ID`. |
+| `AUTH_TOKEN_URL` | **Yes** | _(none)_ | Token endpoint used to obtain outbound service tokens. Same failure mode as `MCP_CLIENT_ID`. |
 
 ### Authentication
 

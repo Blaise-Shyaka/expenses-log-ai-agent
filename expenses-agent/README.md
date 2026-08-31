@@ -14,6 +14,24 @@ LangGraph AI agent that understands, categorizes, and records expenses. Talks to
 cp .env.example .env
 ```
 
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `DEEPSEEK_API_KEY` | Only if `OLLAMA_URL` is unset | _(none)_ | DeepSeek API key. Ignored entirely when `OLLAMA_URL` is set. |
+| `OLLAMA_URL` | Only if `DEEPSEEK_API_KEY` is unset | _(none)_ | Local Ollama base URL. Takes precedence over DeepSeek when set. |
+| `LANGSMITH_API_KEY` | No | _(none)_ | Optional — enables tracing to LangSmith. |
+| `LANGSMITH_TRACING` | No | _(none)_ | Optional — set to `true` to enable passive tracing. |
+| `LANGSMITH_PROJECT` | No | _(none)_ | Optional — organizes traces by project name. |
+| `PORT` | No | `8123` | Port the agent listens on (standalone server mode only). |
+| `MCP_URL` | No | `http://localhost:8124` | URL of the MCP tool server. |
+| `AUTH_JWKS_URI` | Only if `AUTH_REQUIRED=true` | _(none)_ | JWKS endpoint used to verify incoming user JWTs. |
+| `AUTH_ISSUER` | Only if `AUTH_REQUIRED=true` | _(none)_ | Expected `iss` claim in incoming user JWTs. |
+| `AUTH_TOKEN_URL` | **Yes** | _(none)_ | Token endpoint used to fetch the agent's own service token. Used on every tool call regardless of `AUTH_REQUIRED` — missing it raises an error the first time a tool runs. |
+| `AGENT_CLIENT_ID` | **Yes** | _(none)_ | `client_credentials` client ID. Same failure mode as `AUTH_TOKEN_URL`. |
+| `AGENT_CLIENT_SECRET` | **Yes** | _(none)_ | `client_credentials` client secret. Same failure mode as `AUTH_TOKEN_URL`. |
+| `AUTH_REQUIRED` | No | `true` | Set to `false` to skip verifying incoming user JWTs and use a hardcoded dev user id instead. Does **not** affect the outbound service-token vars above, which are always required. |
+
 Open `.env` and fill in your LLM credentials. You need **either** DeepSeek **or** Ollama. Not both. We chose deepseek, since it's good value for money.
 
 ### Option A: DeepSeek (cloud)

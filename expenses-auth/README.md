@@ -6,16 +6,18 @@ Standalone Go authentication service. Port 8001.
 
 Copy `.env.example` to `.env` and fill in values:
 
-| Variable | Default | Description |
-|---|---|---|
-| `PORT` | `8001` | HTTP listen port |
-| `DATABASE_URL` | _(none)_ | PostgreSQL DSN. If unset, uses in-memory store (no persistence). |
-| `SIGNING_KEY_PATH` | `signing.key` | Path for RSA private key. Generated on first run if missing. Ignored if `SIGNING_KEY_PEM` is set. |
-| `SIGNING_KEY_PEM` | _(none)_ | PEM-encoded RSA private key, supplied directly (e.g. from a secrets manager). Takes precedence over `SIGNING_KEY_PATH` and never touches disk. Literal `\n` sequences are accepted in place of real newlines. |
-| `ISSUER_URL` | `http://localhost:8001` | JWT `iss` claim value. |
-| `SVC_AGENT_SECRET` | _(none)_ | Secret for machine client `svc-agent`. Both SVC_* vars must be set to seed clients. |
-| `SVC_MCP_SECRET` | _(none)_ | Secret for machine client `svc-mcp`. |
-| `SEED_DEV_USER` | `false` | Set to `true` to seed dev user `00000000-0000-0000-0000-000000000001`. |
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `PORT` | No | `8001` | HTTP listen port |
+| `DATABASE_URL` | No | _(none)_ | PostgreSQL DSN. If unset, uses in-memory store (no persistence). |
+| `SIGNING_KEY_PATH` | No | `signing.key` | Path for RSA private key. Generated on first run if missing. Ignored if `SIGNING_KEY_PEM` is set. |
+| `SIGNING_KEY_PEM` | No | _(none)_ | PEM-encoded RSA private key, supplied directly (e.g. from a secrets manager). Takes precedence over `SIGNING_KEY_PATH` and never touches disk. Literal `\n` sequences are accepted in place of real newlines. |
+| `ISSUER_URL` | No | `http://localhost:8001` | JWT `iss` claim value. |
+| `SVC_AGENT_SECRET` | No | _(none)_ | Secret for machine client `svc-agent`. Both `SVC_*` vars must be set together, or neither client is seeded. |
+| `SVC_MCP_SECRET` | No | _(none)_ | Secret for machine client `svc-mcp`. Same pairing requirement as `SVC_AGENT_SECRET`. |
+| `SEED_DEV_USER` | No | `false` | Set to `true` to seed dev user `00000000-0000-0000-0000-000000000001`. |
+
+Nothing here is strictly required — the service starts with zero configuration, falling back to an in-memory store and a freshly generated signing key. In practice, set `DATABASE_URL` for anything beyond a quick local test (data doesn't survive a restart otherwise), and set both `SVC_AGENT_SECRET`/`SVC_MCP_SECRET` so the other services have machine clients to authenticate with.
 
 ## Run
 

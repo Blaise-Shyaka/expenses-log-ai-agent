@@ -38,16 +38,22 @@ ALEMBIC_URL="mysql+pymysql://dev_user:secret@localhost:3306/expenses_dev"
 
 > Both URLs point to the same database but use different drivers. `DATABASE_URL` uses `aiomysql` (async, for the app). `ALEMBIC_URL` uses `pymysql` (sync, for migrations). Both are required.
 
-Set the JWT auth variables to point to your auth service:
+### Environment Variables
 
-```
-AUTH_JWKS_URI="https://auth.example.com/.well-known/jwks.json"
-AUTH_ISSUER="https://auth.example.com"
-AUTH_AUDIENCE="expenses-api"
-AUTH_REQUIRED=true
-```
-
-Set `AUTH_REQUIRED=false` to bypass authentication in local development (all requests pass through unauthenticated). Set `DEBUG=true` to re-enable `/docs`, `/redoc`, and `/openapi.json`.
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `MYSQL_ROOT_PASSWORD` | No | _(none)_ | Only used in the `docker run` command above to configure the local MySQL container — not read by the app itself. |
+| `MYSQL_DATABASE` | No | _(none)_ | Same — Docker container config only. |
+| `MYSQL_USER` | No | _(none)_ | Same — Docker container config only. |
+| `MYSQL_PASSWORD` | No | _(none)_ | Same — Docker container config only. |
+| `PORT` | No | `8000` | Port the API listens on (only applies when running via `python main.py`; `uvicorn --port` overrides it). |
+| `DATABASE_URL` | **Yes** | `""` | Async MySQL DSN (`aiomysql`). Empty value fails at engine creation, so the app won't start without it. |
+| `ALEMBIC_URL` | **Yes** | `""` | Sync MySQL DSN (`pymysql`) used only by `alembic upgrade`. Empty value fails migrations. |
+| `AUTH_JWKS_URI` | Only if `AUTH_REQUIRED=true` | `""` | JWKS endpoint for RS256 JWT verification. Only fails once the first authenticated request comes in, not at startup. |
+| `AUTH_ISSUER` | Only if `AUTH_REQUIRED=true` | `""` | Expected `iss` claim in inbound JWTs. |
+| `AUTH_AUDIENCE` | No | `expenses-api` | Expected `aud` claim in inbound JWTs. |
+| `AUTH_REQUIRED` | No | `true` | Set to `false` to bypass authentication in local development (all requests pass through unauthenticated). |
+| `DEBUG` | No | `false` | Set to `true` to re-enable `/docs`, `/redoc`, and `/openapi.json`. |
 
 ## 3. Install Dependencies
 
