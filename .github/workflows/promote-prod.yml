@@ -82,7 +82,7 @@ jobs:
             "${{ secrets.COOLIFY_URL }}/api/v1/applications/${UUID}" \
             --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
             --header "Content-Type: application/json" \
-            --data "{\"docker_image_tag\": \"${{ steps.vars.outputs.version }}\"}"
+            --data "{\"docker_registry_image_tag\": \"${{ steps.vars.outputs.version }}\"}"
 
       - name: Trigger Coolify prod deploy
         env:
