@@ -1,10 +1,16 @@
 # Triggers when a GitHub Release is published. Never rebuilds — it re-tags
-# the :sha-<short-sha> image already built by build-dev.yml for that exact
-# commit as the release version, then points each prod resource at it.
+# each service's current :dev image (whatever build-dev.yml last pushed for
+# it) as the release version, then points each prod resource at it.
 #
-# The release must be cut from a commit that already went through a
-# successful build-dev.yml run on main, since that's what publishes the
-# :sha-<short-sha> image this workflow promotes.
+# Promoting from :dev rather than a :sha-<commit> tag matching the release's
+# exact commit is deliberate: build-dev.yml only rebuilds services whose
+# directory actually changed, so the release commit itself may not have a
+# matching :sha-<short-sha> image for every service (e.g. a commit that only
+# touches .github/workflows/). :dev always reflects each service's actual
+# latest built state regardless of which commit last touched it.
+#
+# Only real precondition: every service must have had at least one
+# successful build-dev.yml run before the first release.
 #
 # Required secrets:
 #   COOLIFY_TOKEN                 repo-level (shared with build-dev.yml,
@@ -51,10 +57,6 @@ jobs:
           - service: ui
             uuid_secret: COOLIFY_APP_UUID_UI
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.release.tag_name }}
-
       - uses: docker/setup-buildx-action@v3
 
       - uses: docker/login-action@v3
@@ -64,15 +66,13 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - id: vars
-        run: |
-          echo "version=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
-          echo "sha_short=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+        run: echo "version=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
 
       - name: Promote dev image to release tag
         run: |
           docker buildx imagetools create \
             --tag ghcr.io/blaise-shyaka/${{ matrix.service }}:${{ steps.vars.outputs.version }} \
-            ghcr.io/blaise-shyaka/${{ matrix.service }}:sha-${{ steps.vars.outputs.sha_short }}
+            ghcr.io/blaise-shyaka/${{ matrix.service }}:dev
 
       - name: Point Coolify at the release tag
         env:
