@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@copilotkit/react-ui/v2/styles.css";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
 import { Providers } from "@/components/providers";
 
 const geistSans = Geist({
@@ -20,17 +18,15 @@ export const metadata: Metadata = {
   description: "Log your expenses, categorize them, and get reports.",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
-
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <Providers session={session}>{children}</Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
