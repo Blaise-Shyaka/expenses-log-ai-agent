@@ -12,26 +12,7 @@ const POLL_INTERVAL_MS = 30 * 1000;
 // a tight loop instead of at the poll cadence.
 const MIN_RETRY_GAP_MS = 10 * 1000;
 
-/**
- * Keeps the access token fresh, and ends the session when it can't be.
- *
- * Expiry is checked against the wall clock on mount, on an interval, and
- * whenever the user comes back (tab visible / window focused / network back).
- * A single long setTimeout can't do this job: it's delayed or lost when the
- * machine sleeps or the tab is throttled, and one failed attempt (the network
- * often isn't back yet on wake) would never be retried.
- *
- * auth.ts's jwt callback has its own buffer and does the actual refresh
- * decision — this just makes sure something asks, so a real user-facing
- * request essentially never has to.
- *
- * A failed refresh surfaces as session.error. Sign out then, rather than
- * leaving a chat on screen that will 401 on the first message.
- *
- * Deliberately single-tab only for now: each tab runs its own checks, and
- * multiple tabs can still race each other. That's a known, separate problem
- * (needs cross-tab coordination, e.g. the Web Locks API) — not solved here.
- */
+/** Keeps the access token fresh, and ends the session when it can't be. */
 export function SessionRefresh() {
   const { data: session, update } = useSession();
   const hasSession = session != null;
