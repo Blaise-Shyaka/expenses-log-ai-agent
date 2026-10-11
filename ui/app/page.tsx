@@ -85,6 +85,11 @@ export default function Home() {
       >
         <CopilotChat
           agentId="chat"
+          // CopilotKit lifts the input by the on-screen keyboard's height, but
+          // mobile browsers already scroll the focused field above the
+          // keyboard — the two add up and push the input to the top of the
+          // screen. Zeroing it leaves positioning to the browser.
+          input={{ keyboardHeight: 0 }}
           labels={{
             welcomeMessageText:
               "Hi, I'm Reddington, an expense tracker. How can I help you today?",
