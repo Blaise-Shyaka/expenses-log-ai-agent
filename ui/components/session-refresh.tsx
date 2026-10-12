@@ -1,52 +1,67 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
-/**
- * Schedules a single refresh right before the access token expires, instead
- * of waiting for a request to notice it's already stale. auth.ts's jwt
- * callback has its own buffer and does the actual refresh decision — this
- * just makes sure something proactively asks, so a real user-facing request
- * essentially never has to.
- *
- * Deliberately single-tab only for now: this timer is per-tab, and multiple
- * tabs each running their own can still race each other. That's a known,
- * separate problem (needs cross-tab coordination, e.g. the Web Locks API) —
- * not solved here.
- */
+// Ask for a refresh once the token is within this long of expiring. Kept below
+// auth.ts's REFRESH_BUFFER_MS so the jwt callback always agrees it's due.
+const REFRESH_MARGIN_MS = 60 * 1000;
+const POLL_INTERVAL_MS = 30 * 1000;
+// update() flips next-auth's status to "loading" and back, which re-runs the
+// effect below; without a gap a failing refresh (e.g. offline) would retry in
+// a tight loop instead of at the poll cadence.
+const MIN_RETRY_GAP_MS = 10 * 1000;
+
+/** Keeps the access token fresh, and ends the session when it can't be. */
 export function SessionRefresh() {
-  const { data: session, status, update } = useSession();
-  const accessTokenExpires = session?.accessTokenExpires;
-  const hasCheckedOnMount = useRef(false);
+  const { data: session, update } = useSession();
+  const hasSession = session != null;
 
   // update()'s identity changes on every session/loading change (next-auth
-  // internals) — depending on it directly re-arms these effects in a loop.
+  // internals) — depending on it directly re-arms the effect below in a loop.
   const updateRef = useRef(update);
+  const expiresRef = useRef<number | undefined>(undefined);
+  const lastAttemptRef = useRef(0);
   useEffect(() => {
     updateRef.current = update;
+    expiresRef.current = session?.accessTokenExpires;
   });
 
-  // The scheduled timer below dies if the tab was closed past expiry —
-  // check once on (re)visit instead of only trusting the carried-in session.
   useEffect(() => {
-    if (status !== "authenticated" || hasCheckedOnMount.current) return;
-    hasCheckedOnMount.current = true;
-    updateRef.current();
-  }, [status]);
+    if (session?.error === "RefreshAccessTokenError") {
+      void signOut({ callbackUrl: "/login" });
+    }
+  }, [session?.error]);
 
   useEffect(() => {
-    if (!accessTokenExpires) return;
+    if (!hasSession) return;
 
-    const REFRESH_MARGIN_MS = 60 * 1000;
-    const delay = Math.max(0, accessTokenExpires - Date.now() - REFRESH_MARGIN_MS);
+    const check = () => {
+      const expires = expiresRef.current;
+      const due =
+        expires === undefined || Date.now() >= expires - REFRESH_MARGIN_MS;
+      if (!due || Date.now() - lastAttemptRef.current < MIN_RETRY_GAP_MS) {
+        return;
+      }
+      lastAttemptRef.current = Date.now();
+      void updateRef.current();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") check();
+    };
 
-    const timer = setTimeout(() => {
-      updateRef.current();
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [accessTokenExpires]);
+    check();
+    const interval = setInterval(check, POLL_INTERVAL_MS);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", check);
+    window.addEventListener("online", check);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", check);
+      window.removeEventListener("online", check);
+    };
+  }, [hasSession]);
 
   return null;
 }
