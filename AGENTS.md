@@ -162,6 +162,14 @@ START → llm_node → [tools_condition] → tools → llm_node → END
 
 ---
 
+## API Architecture
+
+`expenses-api` is layered: endpoints (`api/v1/endpoints/`) → services (`services/`) → repositories (`db/repositories/`).
+- Endpoints own HTTP and auth concerns: `check_scope`, `get_principal`. Wiring lives in `api/deps.py`.
+- Services hold business rules and raise domain exceptions (`exceptions/custom_exceptions.py`), which `main.py` maps to HTTP status codes. Services never raise `HTTPException`.
+- `CategoryRepository` and `ExpensesRepository` are built with the acting user's id and scope every query to it (`None` only when auth is disabled). New queries must go through `_scoped()` or filter on `self.user_id`.
+- Repositories only `flush`; the service commits once through `UnitOfWork`, so a request's writes are atomic.
+
 ## API Routes
 
 ```
@@ -181,6 +189,6 @@ API docs auto-generated at `http://localhost:8000/docs`.
 
 ---
 
-## No Tests
+## Tests
 
-There are no test files in this repo. Do not assume a test suite exists. If adding tests, use pytest (consistent with the Python toolchain).
+Only `expenses-api` has tests: `uv run pytest` from `expenses-api/` (runs in CI). They use in-memory SQLite via `aiosqlite`, so no MySQL is needed. The other packages have no tests yet; if adding some, use pytest.

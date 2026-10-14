@@ -63,6 +63,9 @@ jobs:
       - name: Pyright
         run: uv run pyright .
 
+      - name: Tests
+        run: uv run pytest
+
   expenses-auth:
     name: expenses-auth
     runs-on: ubuntu-latest
