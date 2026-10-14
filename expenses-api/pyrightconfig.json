@@ -1,0 +1,8 @@
+{
+  "include": ["."],
+  "exclude": ["alembic/", ".venv/", "__pycache__/"],
+  "pythonVersion": "3.13",
+  "venvPath": ".",
+  "venv": ".venv",
+  "typeCheckingMode": "strict"
+}

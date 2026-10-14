@@ -1,4 +1,5 @@
-from langgraph.graph import MessagesState
+from langgraph import graph
 
-class ExpensesAgentState(MessagesState):
-  pass
+
+class ExpensesAgentState(graph.MessagesState):
+    pass

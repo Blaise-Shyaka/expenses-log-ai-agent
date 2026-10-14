@@ -1,121 +1,109 @@
-#standard packages
-from abc import ABC,abstractmethod
-from typing import Generic,Type,TypeVar,Any,Sequence
+import logging
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
+from typing import Any, NoReturn
 from uuid import UUID
 
-#third party packages
+from sqlalchemy import Select, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import DBAPIError,SQLAlchemyError
-from sqlalchemy import select
 
-
-#local packages 
-from ..base_class import Base
+from db.base import BaseModel
 from exceptions.custom_exceptions import RepositoryException
-from utils.logger_utils import logger
+
+logger = logging.getLogger(__name__)
 
 
+class GenericRepository[T: BaseModel](ABC):
+    @abstractmethod
+    async def delete(self, id: UUID) -> bool:
+        raise NotImplementedError
 
-T=TypeVar('T',bound=Base)
+    @abstractmethod
+    async def read_all(self, skip: int = 0, limit: int = 10) -> Sequence[T]:
+        raise NotImplementedError
 
+    @abstractmethod
+    async def read_by_id(self, id: UUID) -> T | None:
+        raise NotImplementedError
 
-#Implement a repository generic class
-#Below is  an abstract class  that declares  must to have properties for each repository instance.
+    @abstractmethod
+    async def update(self, obj: dict[str, Any], id: UUID) -> T | None:
+        raise NotImplementedError
 
-class GenericRepository(Generic[T],ABC):
-  @abstractmethod 
-  async def delete( self,id:UUID)->bool|None:
-    raise NotImplementedError
-  @abstractmethod
-  async def read_all(self)->Sequence[T]:
-    raise NotImplementedError
-  @abstractmethod
-  async def read_by_id(self,id:UUID)->T|None:
-    raise NotImplementedError
-  @abstractmethod
-  async def update(self,obj:dict[str,Any],id:UUID)->T|None:
-    raise NotImplementedError
-  @abstractmethod
-  async def create(self ,obj:T)->T|None:
-     raise NotImplementedError
+    @abstractmethod
+    async def create(self, obj: T) -> T:
+        raise NotImplementedError
 
 
-class GenericSqlRepository(GenericRepository[T]):
-    
-     def __init__(self,session:AsyncSession,model:Type[T]):
-      self.session=session
-      self.model=model
+class GenericSqlRepository[T: BaseModel](GenericRepository[T]):
+    """SQL repository. It only flushes; committing is the caller's unit of work."""
 
-  # a method  to delete a database record by ID || think of a soft delete
+    def __init__(self, session: AsyncSession, model: type[T]) -> None:
+        self.session = session
+        self.model = model
 
-     async def delete(self, id:UUID)->bool|None:
-        try:
-          db_obj= await self.session.get(self.model,id)
-          if not db_obj:
+    def _scoped(self, statement: Select[tuple[T]]) -> Select[tuple[T]]:
+        """Hook for subclasses to restrict queries, e.g. to the acting user's rows."""
+        return statement
+
+    async def delete(self, id: UUID) -> bool:
+        db_obj = await self.read_by_id(id)
+        if db_obj is None:
             return False
-          
-          await self.session.delete(db_obj)
-          await self.session.commit()
-          return True
-        except (DBAPIError,SQLAlchemyError) as exc:
-           await self.session.rollback()
-           self.handle_exception('delete',exc=exc)
-             
-     # a method to read a list of records from the database
+        try:
+            await self.session.delete(db_obj)
+            await self.session.flush()
+        except SQLAlchemyError as exc:
+            self.handle_exception("delete", exc)
+        return True
 
-     async def read_all(self,skip:int=0,limit:int=10):
-       
-       try:
-         statement=select(self.model).offset(skip).limit(limit)
-         results= await self.session.execute(statement)
-         return results.scalars().all()
-       except (DBAPIError,SQLAlchemyError)as exc:
-          self.handle_exception('read_all',exc=exc)
+    async def read_all(self, skip: int = 0, limit: int = 10) -> Sequence[T]:
+        statement = self._scoped(select(self.model)).offset(skip).limit(limit)
+        try:
+            results = await self.session.execute(statement)
+        except SQLAlchemyError as exc:
+            self.handle_exception("read_all", exc)
+        return results.scalars().all()
 
-# a method to read database record by Id
-     async def read_by_id(self ,id:UUID):
-       try:
-          id_bytes=id.bytes
-          result= await self.session.get(self.model,id_bytes)
-          return result
-          
-       except (DBAPIError,SQLAlchemyError) as exc:
-          self.handle_exception('reaby_by_id',exc=exc)
+    async def read_by_id(self, id: UUID) -> T | None:
+        statement = self._scoped(select(self.model).where(self.model.id == id.bytes))
+        try:
+            results = await self.session.execute(statement)
+        except SQLAlchemyError as exc:
+            self.handle_exception("read_by_id", exc)
+        return results.scalars().first()
 
-  # a method to update  a database  record by ID
+    async def update(self, obj: dict[str, Any], id: UUID) -> T | None:
+        db_obj = await self.read_by_id(id)
+        if db_obj is None:
+            return None
+        for key, value in obj.items():
+            if key.startswith("_"):
+                continue
+            setattr(db_obj, key, value)
+        try:
+            await self.session.flush()
+            await self.session.refresh(db_obj)
+        except SQLAlchemyError as exc:
+            self.handle_exception("update", exc)
+        return db_obj
 
-     async def update(self,obj:dict[str,Any],id:UUID):
-       try:
-         db_obj= await self.read_by_id(id)
-         if not db_obj:
-           raise RepositoryException("Item not found")
-         
-         for key,value in obj.items():
-           if key.startswith('__'):
-             continue
-           setattr(db_obj,key,value)
+    async def create(self, obj: T) -> T:
+        self.session.add(obj)
+        try:
+            await self.session.flush()
+            await self.session.refresh(obj)
+        except SQLAlchemyError as exc:
+            self.handle_exception("create", exc)
+        return obj
 
-           await self.session.commit() 
-           await self.session.refresh(db_obj)
-           return db_obj
-             
-       except (DBAPIError,SQLAlchemyError)as exc:
-          await self.session.rollback()
-          self.handle_exception("update",exc=exc)
-
-     async def create(self, obj:T)->T|None:
-       try:
-          self.session.add(obj)
-          await self.session.commit()
-          await self.session.refresh(obj)
-          return obj
-        
-       except (DBAPIError,SQLAlchemyError)as exc:
-          await self.session.rollback()
-          self.handle_exception('create',exc=exc)
-
-  
-     def handle_exception(self,operation:str,exc:Exception):
-      
-       logger.error(f"Repository exception during:{operation}:{exc}",exc_info=True,extra={"model":f"{self.model.__name__}"})
-       raise RepositoryException(f"Repository Error during :{operation}")
+    def handle_exception(self, operation: str, exc: Exception) -> NoReturn:
+        logger.error(
+            "Repository exception during %s on %s: %s",
+            operation,
+            self.model.__name__,
+            exc,
+            exc_info=True,
+        )
+        raise RepositoryException(f"Repository error during {operation}") from exc

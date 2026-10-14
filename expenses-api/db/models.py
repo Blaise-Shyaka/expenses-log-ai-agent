@@ -1,42 +1,38 @@
-#standard packages
 from datetime import datetime
 
-#third party packages
-from sqlalchemy import String, Float, ForeignKey, DateTime
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy import DateTime, Float, ForeignKey, String, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import BINARY
 
-#local packages 
 from db.base import BaseModel
 
 
 class UserDB(BaseModel):
-  __tablename__ = "users"
+    __tablename__ = "users"
 
-  first_name = mapped_column(String(255), nullable=False)
-  last_name = mapped_column(String(255), nullable=False)
-  email = mapped_column(String(255), unique=True, index=True, nullable=False)
-  hashed_password = mapped_column(String(255), index=True)
-  google_id = mapped_column(String(255), index=True)
-  expenses=relationship("ExpenseDB",back_populates='user')
-  
+    first_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
+
 
 class CategoryDB(BaseModel):
-  __tablename__ = "categories"
+    __tablename__ = "categories"
+    __table_args__ = (UniqueConstraint("user_id", "name", name="uq_categories_user_id_name"),)
 
-  name = mapped_column(String(255), unique=True, index=True)
-  description = mapped_column(String(500), nullable=True)
-  user_id = mapped_column(BINARY(16), ForeignKey("users.id"), nullable=False)
-  expenses = relationship("ExpenseDB", back_populates="category")
+    name: Mapped[str | None] = mapped_column(String(255), index=True)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    user_id: Mapped[bytes] = mapped_column(BINARY(16), ForeignKey("users.id"), nullable=False)
+
+    expenses: Mapped[list["ExpenseDB"]] = relationship(back_populates="category")
 
 
 class ExpenseDB(BaseModel):
-  __tablename__ = "expenses"
+    __tablename__ = "expenses"
 
-  amount: Mapped[float] = mapped_column(Float)
-  description = mapped_column(String(500), nullable=True)
-  date = mapped_column(DateTime, default=datetime.now)
-  category_id = mapped_column(BINARY(16), ForeignKey("categories.id"))
-  user_id = mapped_column(BINARY(16), ForeignKey("users.id"), nullable=False)
-  category = relationship("CategoryDB", back_populates="expenses")
-  user=relationship("UserDB",back_populates='expenses')
+    amount: Mapped[float] = mapped_column(Float)
+    description: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    date: Mapped[datetime | None] = mapped_column(DateTime, default=datetime.now)
+    category_id: Mapped[bytes | None] = mapped_column(BINARY(16), ForeignKey("categories.id"))
+    user_id: Mapped[bytes] = mapped_column(BINARY(16), ForeignKey("users.id"), nullable=False)
+
+    category: Mapped["CategoryDB"] = relationship(back_populates="expenses")
