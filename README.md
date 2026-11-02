@@ -2,7 +2,7 @@
 
 Track your personal expenses by simply talking to an AI. Paste a payment confirmation, and watch it log itself.
 
-**[Try the live demo](http://dywm0f0jdse5uuzns55y6avz.161.97.78.63.sslip.io/)**
+**[Try the live demo](http://obdaoxhvlfm41ftel73x05tx.161.97.78.63.sslip.io/)**
 
 Chat interactions happen through a [CopilotKit](https://docs.copilotkit.ai) interface that routes messages to a LangGraph agent. The agent calls tools exposed by an MCP server, which records expenses via a REST API.
 
