@@ -2,6 +2,8 @@
 
 Read `AGENTS.md` for the project layout. It is out of date (see #94): where it disagrees with the code or `README.md`, trust the code.
 
+The agreed target architecture, open decisions (D1 to D5) and task order are in `docs/architecture.md`. Read it before starting an issue.
+
 ## How work is tracked
 
 - Every change starts from a GitHub issue. Stories are parent issues; tasks are their sub-issues, in the order they should be done.
