@@ -2,7 +2,17 @@
 
 Read `AGENTS.md` for the project layout. It is out of date (see #94): where it disagrees with the code or `README.md`, trust the code.
 
-The agreed target architecture, open decisions (D1 to D5) and task order are in `docs/architecture.md`. Read it before starting an issue.
+The agreed target architecture, decisions and task order are in `docs/architecture.md`. Read it before starting an issue.
+
+## Decisions
+
+All five are made. Do not reopen them in a pull request; raise an issue instead.
+
+- **D1:** The agent, MCP server and REST API merge into one Python app. No zero-trust microservice setup.
+- **D2:** Production data is important and must not be lost. Back it up and rehearse any migration on a copy. Never write to or delete from the production MySQL yourself.
+- **D3:** An expense's currency is the user's default, unless the message names one. A new user is offered USD and must confirm it before anything is saved. Existing users' expenses are RWF.
+- **D4:** External MCP clients can log expenses through the app's `/mcp`. The app's own chat calls the same tool functions directly, not through MCP.
+- **D5:** Sign-in moves to WorkOS AuthKit, replacing `expenses-auth`. Any MCP client that follows the MCP authorization spec must be able to sign in.
 
 ## How work is tracked
 
