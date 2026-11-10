@@ -25,7 +25,7 @@ flowchart LR
   end
 ```
 
-In the target, the agent's tools reach the service layer by function call instead of two network hops. `expenses-auth` stays but issues user tokens only. External MCP clients use the app's `/mcp` route, which serves the same tool functions the agent calls.
+In the target, the agent's tools reach the service layer by function call instead of two network hops. `expenses-auth` stays through Phases 1 to 3, issuing user tokens only; in Phase 4, WorkOS AuthKit replaces it (D5), leaving `ui` and the app. External MCP clients use the app's `/mcp` route, which serves the same tool functions the agent calls.
 
 ## What changes
 
@@ -33,7 +33,7 @@ Most of the change is deletion: the MCP hop, service-to-service tokens, the sche
 
 | Area | Today | Target | Evidence |
 | --- | --- | --- | --- |
-| Services | Five: ui, expenses-agent, expenses-mcp, expenses-api, expenses-auth | Three: ui, one Python app, expenses-auth | `README.md` |
+| Services | Five: ui, expenses-agent, expenses-mcp, expenses-api, expenses-auth | Three: ui, one Python app, expenses-auth; then two, once WorkOS AuthKit replaces expenses-auth | `README.md` |
 | Tool calls | Each call opens an MCP session, then a REST request, then SQL | A function call into the service layer; the same functions are served at `/mcp` for external clients | `expenses-agent/src/graph.py:24`, `expenses-mcp/src/tools.py` |
 | Schemas | `expenses-mcp/src/types.py` copies the API schemas | One definition | `expenses-api/schemas/schema.py` |
 | User identity | `X-Acting-User` header, vouched for by service tokens that can act as any user | The user's JWT verified once; `user_id` passed as a required argument | `expenses-api/core/security.py:43`, `expenses-mcp/src/auth.py:46` |
@@ -56,7 +56,7 @@ Most of the change is deletion: the MCP hop, service-to-service tokens, the sche
 | D2 | Is there data in the production MySQL worth keeping? | Decided: yes. Production data is important and must not be lost. It is backed up and migrated, the migration is rehearsed on a copy first, and MySQL stays read-only until every user's counts and totals match. | #71, #72 |
 | D3 | Where does an expense's currency come from? | Decided: from the user's default currency. A new user is offered USD on their first expense and must confirm it, or choose another, before anything is saved; their answer becomes the default. Existing users' expenses are RWF, and RWF becomes their default. A currency named in the message applies to that expense only. | #73, #71 |
 | D4 | Should external MCP clients be able to log expenses? | Decided: yes. The app serves `/mcp` for external clients; its own chat calls the same tool functions directly. | #59, #65, #66 |
-| D5 | How do external MCP clients sign in? | Requirement decided: any MCP client that follows the MCP authorization spec can sign a user in safely and reliably. Still open: build that into `expenses-auth` or move to a maintained identity provider. | #66, #67, #83, #85 |
+| D5 | How do external MCP clients sign in? | Decided: replace `expenses-auth` with WorkOS AuthKit, which supports Client ID Metadata Documents and dynamic client registration for MCP clients and is free up to 1 million users. Existing users keep their passwords: their argon2id hashes are imported. Sign-out revocation and login throttling come from WorkOS, so #83 and #85 are dropped. | #66, #67, #86 |
 
 ## Phases
 
@@ -64,7 +64,7 @@ Sizes and full criteria are in the issues. S is up to half a day, M one to two d
 
 ### Phase 0: quick fixes
 
-Small, independent fixes, one pull request each: #92 (uvicorn reload), #93 (Go tests in CI), #94 (stale docs), #95 (MCP timeouts; skip if #65 starts soon), #96 (rate limiter), #78 (pagination), #83 (logout revokes the refresh token), #84 (HTTPS).
+Small, independent fixes, one pull request each: #92 (uvicorn reload), #93 (Go tests in CI), #94 (stale docs), #95 (MCP timeouts; skip if #65 starts soon), #96 (rate limiter), #78 (pagination), #84 (HTTPS).
 
 ### Phase 1: one Python service
 
@@ -88,7 +88,7 @@ Order: #75, #80, #81 and #82 need nothing from Phase 2. #76 and #77 build on the
 
 ### Phase 4: hardening and options
 
-Stories #57 and the rest of #50. #85 stands alone. #66 is in scope because D4 is yes. It must meet the D5 requirement; #67 and #86 depend on how D5 is met.
+Stories #57 and the rest of #50. #67 moves sign-in to WorkOS AuthKit and #66 connects `/mcp` to it; do them together. #86 is easiest alongside #67.
 
 ## Request logging
 
