@@ -50,13 +50,13 @@ Most of the change is deletion: the MCP hop, service-to-service tokens, the sche
 
 ## Decisions
 
-| # | Decision | Status | Default if not decided otherwise | Gates |
-| --- | --- | --- | --- | --- |
-| D1 | Is showing a zero-trust microservice setup a goal of this project? | Open | No: merge the services. Otherwise keep them and replace the header with token exchange, so the user stays the token subject. | Story 1 (#49) |
-| D2 | Is there data in the production MySQL worth keeping? | Open | Yes: migrate it. Otherwise start empty and skip #71. | #71 |
-| D3 | Where does an expense's currency come from? | Open | A default currency per user, overridable per expense. Otherwise require it on every expense. | #73 |
-| D4 | Should external MCP clients be able to log expenses? | Decided: yes | The app serves `/mcp` for external clients; its own chat calls the same tool functions directly. | #59, #65, #66 |
-| D5 | Keep the Go auth service once external MCP clients need OAuth sign-in? | Open | Keep it through Phases 1 to 3, then replace it when #66 starts rather than hand-build authorization-code OAuth. | #83, #85, #66, #67 |
+| # | Decision | Outcome | Gates |
+| --- | --- | --- | --- |
+| D1 | Is showing a zero-trust microservice setup a goal of this project? | Decided: no. The agent, MCP server and REST API merge into one app. | Story 1 (#49) |
+| D2 | Is there data in the production MySQL worth keeping? | Decided: yes. Production data is important and must not be lost. It is backed up and migrated, the migration is rehearsed on a copy first, and MySQL stays read-only until every user's counts and totals match. | #71, #72 |
+| D3 | Where does an expense's currency come from? | Decided: from the user's default currency. If the user has none, the assistant asks for it before logging the expense and saves the answer as the default. A currency named in the message applies to that expense only. | #73 |
+| D4 | Should external MCP clients be able to log expenses? | Decided: yes. The app serves `/mcp` for external clients; its own chat calls the same tool functions directly. | #59, #65, #66 |
+| D5 | How do external MCP clients sign in? | Requirement decided: any MCP client that follows the MCP authorization spec can sign a user in safely and reliably. Still open: build that into `expenses-auth` or move to a maintained identity provider. | #66, #67, #83, #85 |
 
 ## Phases
 
@@ -64,11 +64,11 @@ Sizes and full criteria are in the issues. S is up to half a day, M one to two d
 
 ### Phase 0: quick fixes
 
-Small, independent fixes, one pull request each: #92 (uvicorn reload), #93 (Go tests in CI), #94 (stale docs), #95 (MCP timeouts; skip if #65 starts soon), #96 (rate limiter), #78 (pagination), #83 (logout revokes the refresh token; depends on D5), #84 (HTTPS).
+Small, independent fixes, one pull request each: #92 (uvicorn reload), #93 (Go tests in CI), #94 (stale docs), #95 (MCP timeouts; skip if #65 starts soon), #96 (rate limiter), #78 (pagination), #83 (logout revokes the refresh token), #84 (HTTPS).
 
 ### Phase 1: one Python service
 
-Story #49 and the first half of story #50. The agent moves into the API service, tools become plain functions over the services, and everything that carried identity between services is deleted. Start once D1 is settled.
+Story #49 and the first half of story #50. The agent moves into the API service, tools become plain functions over the services, and everything that carried identity between services is deleted. D1 is decided, so this phase can start.
 
 Order: #58, #59 and #60 in sequence; #65 and #61 once #59 is deployed; #63 last; #62 and #64 at any point.
 
@@ -88,7 +88,7 @@ Order: #75, #80, #81 and #82 need nothing from Phase 2. #76 and #77 build on the
 
 ### Phase 4: hardening and options
 
-Stories #57 and the rest of #50. #85 stands alone. #66 is in scope because D4 is yes, and it forces D5; #67 and #86 follow from D5.
+Stories #57 and the rest of #50. #85 stands alone. #66 is in scope because D4 is yes. It must meet the D5 requirement; #67 and #86 depend on how D5 is met.
 
 ## Request logging
 
@@ -104,4 +104,4 @@ Never logged: message text, prompts, model output, tool arguments, amounts, merc
 
 The trace id travels as a W3C `traceparent` header. `ui` starts it with `@vercel/otel`, which only propagates to URLs listed in `fetch.propagateContextUrls`. The app's FastAPI instrumentation and the Go `otelhttp` handler pick it up, and in-process tool calls inherit it. The line is printed from a span processor; `ConsoleSpanExporter` prints a multi-line JSON block per span, so it stays behind a debug flag.
 
-Order: #87 and #88 now, since neither depends on the merge. #89, #90 and #91 wait for #58 and #59, so there is one Python service to instrument instead of three. If D1 keeps the services, #89 applies to each of them.
+Order: #87 and #88 now, since neither depends on the merge. #89, #90 and #91 wait for #58 and #59, so there is one Python service to instrument instead of three.
