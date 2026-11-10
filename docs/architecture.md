@@ -54,7 +54,7 @@ Most of the change is deletion: the MCP hop, service-to-service tokens, the sche
 | --- | --- | --- | --- |
 | D1 | Is showing a zero-trust microservice setup a goal of this project? | Decided: no. The agent, MCP server and REST API merge into one app. | Story 1 (#49) |
 | D2 | Is there data in the production MySQL worth keeping? | Decided: yes. Production data is important and must not be lost. It is backed up and migrated, the migration is rehearsed on a copy first, and MySQL stays read-only until every user's counts and totals match. | #71, #72 |
-| D3 | Where does an expense's currency come from? | Decided: from the user's default currency. If the user has none, the assistant asks for it before logging the expense and saves the answer as the default. A currency named in the message applies to that expense only. | #73 |
+| D3 | Where does an expense's currency come from? | Decided: from the user's default currency. A new user is offered USD on their first expense and must confirm it, or choose another, before anything is saved; their answer becomes the default. Existing users' expenses are RWF, and RWF becomes their default. A currency named in the message applies to that expense only. | #73, #71 |
 | D4 | Should external MCP clients be able to log expenses? | Decided: yes. The app serves `/mcp` for external clients; its own chat calls the same tool functions directly. | #59, #65, #66 |
 | D5 | How do external MCP clients sign in? | Requirement decided: any MCP client that follows the MCP authorization spec can sign a user in safely and reliably. Still open: build that into `expenses-auth` or move to a maintained identity provider. | #66, #67, #83, #85 |
 
