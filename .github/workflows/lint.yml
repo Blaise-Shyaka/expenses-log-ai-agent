@@ -151,3 +151,6 @@ jobs:
 
       - name: TypeScript
         run: pnpm run check:types
+
+      - name: Build
+        run: pnpm run build
