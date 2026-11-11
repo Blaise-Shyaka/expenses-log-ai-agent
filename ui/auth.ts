@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { SECURE_COOKIES } from "@/lib/auth-cookies";
 import { login, refreshTokens } from "@/lib/expenses-auth-client";
 
 // Refresh a bit before the access token actually expires, not after — the
@@ -12,6 +13,7 @@ const REFRESH_BUFFER_MS = 2 * 60 * 1000;
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.AUTH_SECRET,
+  useSecureCookies: SECURE_COOKIES,
   providers: [
     Credentials({
       credentials: {
