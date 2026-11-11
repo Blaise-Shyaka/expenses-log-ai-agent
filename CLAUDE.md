@@ -20,6 +20,7 @@ All five are made. Do not reopen them in a pull request; raise an issue instead.
 - Issues are short: an imperative title, two or three sentences on what is wrong and what should be true, an **Acceptance criteria** checklist, and an optional **Agents** section with where to start, how to check and what to leave alone.
 - Labels: `enhancement` or `bug`.
 - One task per branch and per pull request. Never commit to `main`.
+- Branch names are the issue number and a brief description, lowercase with hyphens and no prefix: `94-update-agents-md`.
 
 ## Commits and pull requests
 
