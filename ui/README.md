@@ -52,3 +52,7 @@ pnpm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Production
+
+The production build (`NODE_ENV=production`, as in the Dockerfile) marks its auth cookies `Secure`, so browsers only send them over HTTPS. Serve it behind HTTPS with HTTP redirected to HTTPS; over plain HTTP, sign-in will not stick. `http://localhost` still works, because browsers treat it as secure.

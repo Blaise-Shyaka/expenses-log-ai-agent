@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { SECURE_COOKIES } from "@/lib/auth-cookies";
 
 export default async function proxy(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET,
+    secureCookie: SECURE_COOKIES,
+  });
   // A failed refresh (auth.ts's jwt callback) is functionally signed out.
   const isAuthenticated = !!token && !token.error;
   const { pathname } = req.nextUrl;
