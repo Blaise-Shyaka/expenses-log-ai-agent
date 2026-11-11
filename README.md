@@ -2,7 +2,7 @@
 
 Track your personal expenses by simply talking to an AI. Paste a payment confirmation, and watch it log itself.
 
-**[Try the live demo](https://expenselog.uk/)**
+**ExpenseLog is live at [expenselog.uk](https://expenselog.uk/).** Create an account and paste your first payment confirmation.
 
 Chat interactions happen through a [CopilotKit](https://docs.copilotkit.ai) interface that routes messages to a LangGraph agent. The agent calls tools exposed by an MCP server, which records expenses via a REST API.
 
