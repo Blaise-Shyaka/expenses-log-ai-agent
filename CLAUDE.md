@@ -20,12 +20,15 @@ All five are made. Do not reopen them in a pull request; raise an issue instead.
 - Issues are short: an imperative title, two or three sentences on what is wrong and what should be true, an **Acceptance criteria** checklist, and an optional **Agents** section with where to start, how to check and what to leave alone.
 - Labels: `enhancement` or `bug`.
 - One task per branch and per pull request. Never commit to `main`.
+- Branch names are the issue number and a brief description, lowercase with hyphens and no prefix: `94-update-agents-md`.
 
 ## Commits and pull requests
 
 - A commit message is one line, in the imperative, with no body.
+- Commits are never authored or committed as Claude. Before the first commit, set `user.name` and `user.email` in the checkout to the repository owner's (Blaise-Shyaka), as on their commits on `main` (`git log origin/main --format='%an <%ae>'`).
 - No `Co-Authored-By` or other trailers in commits.
 - Pull requests are written for a human reviewer: what changed and why, how it was checked, and anything a human must do (Coolify, DNS, secrets). Link the issue with `Closes #N`.
+- Pull request descriptions carry no "Generated with Claude Code" line, session link or other AI attribution.
 - Only a human merges. Agents never merge, approve, enable auto-merge or push to `main`.
 
 ## Before pushing
