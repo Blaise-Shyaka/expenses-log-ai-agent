@@ -76,7 +76,8 @@ def health() -> dict[str, object]:
 
 
 def main() -> None:
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8123)), reload=True)
+    reload = os.environ.get("RELOAD", "false").lower() in ("true", "1", "yes")
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8123)), reload=reload)
 
 
 if __name__ == "__main__":

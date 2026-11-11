@@ -99,3 +99,5 @@ uv run python main.py
 ```
 
 Starts the agent at `http://localhost:8123`. Use this mode when running alongside the UI.
+
+Auto-reload is off by default. To restart the server on code changes, set `RELOAD=true` in your `.env`. Leave it unset in deployed containers.
