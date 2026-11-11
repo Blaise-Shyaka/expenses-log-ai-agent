@@ -1,6 +1,7 @@
 from uuid import UUID, uuid4
 
 import pytest
+from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -83,6 +84,45 @@ async def test_lists_only_show_own_rows(
     assert (await client.get("/api/v1/expenses/")).json() == []
     assert (await client.get("/api/v1/categories/")).json() == []
     assert (await client.get("/api/v1/expenses/totals/by-category")).json() == []
+
+
+async def _list_descriptions(client: AsyncClient, **params: str | int) -> list[str]:
+    response = await client.get("/api/v1/expenses/", params=params)
+    assert response.status_code == 200
+    return [expense["description"] for expense in response.json()]
+
+
+async def test_expense_list_is_paginated_newest_first(
+    client_for: ClientFactory, user_a: UUID
+) -> None:
+    client = client_for(user_a)
+    for day, category in [(2, "Food"), (4, "Rent"), (1, "Food"), (3, "Food")]:
+        expense = {
+            "amount": 1.0,
+            "description": f"day {day}",
+            "date": f"2026-01-0{day}T12:00:00",
+            "category_name": category,
+        }
+        await client.post("/api/v1/expenses/", json=expense)
+
+    assert await _list_descriptions(client) == ["day 4", "day 3", "day 2", "day 1"]
+    assert await _list_descriptions(client, limit=2) == ["day 4", "day 3"]
+    assert await _list_descriptions(client, skip=2, limit=2) == ["day 2", "day 1"]
+    assert await _list_descriptions(client, category_name="food", limit=2) == ["day 3", "day 2"]
+    assert await _list_descriptions(client, category_name="food", skip=2, limit=2) == ["day 1"]
+
+
+async def test_expense_pages_do_not_overlap_when_dates_tie(
+    client_for: ClientFactory, user_a: UUID
+) -> None:
+    client = client_for(user_a)
+    for name in ["a", "b", "c"]:
+        expense = {**EXPENSE, "description": name, "date": "2026-01-01T12:00:00"}
+        await client.post("/api/v1/expenses/", json=expense)
+
+    pages = [await _list_descriptions(client, skip=skip, limit=1) for skip in range(3)]
+
+    assert sorted(name for page in pages for name in page) == ["a", "b", "c"]
 
 
 async def test_totals(client_for: ClientFactory, user_a: UUID) -> None:
