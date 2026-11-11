@@ -10,6 +10,26 @@ from pydantic import SecretStr
 
 load_dotenv()
 
+
+def _make_rate_limiter() -> InMemoryRateLimiter | None:
+    """One limiter for the whole process, or None (the default) for no limit.
+
+    It is shared by every user, so it only makes sense to cap spend or stay under
+    a provider's account-wide limit.
+    """
+    raw = environ.get("LLM_REQUESTS_PER_SECOND", "").strip()
+    if not raw:
+        return None
+    try:
+        requests_per_second = float(raw)
+    except ValueError:
+        requests_per_second = 0.0
+    if requests_per_second <= 0:
+        raise ValueError(f"LLM_REQUESTS_PER_SECOND must be a positive number, got {raw!r}")
+    return InMemoryRateLimiter(requests_per_second=requests_per_second)
+
+
+rate_limiter = _make_rate_limiter()
 ollama_url = environ.get("OLLAMA_URL")
 
 if ollama_url is not None:
@@ -22,11 +42,11 @@ if ollama_url is not None:
         num_ctx=4096,
         top_k=10,
         top_p=0.95,
+        rate_limiter=rate_limiter,
     )
 else:
     from langchain_deepseek import ChatDeepSeek
 
-    rate_limiter = InMemoryRateLimiter(requests_per_second=0.2)
     llm = ChatDeepSeek(
         model="deepseek-chat",
         rate_limiter=rate_limiter,

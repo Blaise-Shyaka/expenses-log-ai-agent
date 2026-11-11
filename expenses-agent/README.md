@@ -39,6 +39,16 @@ OLLAMA_URL=http://localhost:11434
 
 > If `OLLAMA_URL` is set, it takes precedence and DeepSeek is ignored.
 
+### Rate limit (optional)
+
+Model calls are not rate limited by default. To cap them, set the number of calls per second:
+
+```
+LLM_REQUESTS_PER_SECOND=0.5
+```
+
+> The limit applies to the whole process, so every user shares it: at `0.2`, two people chatting at once each wait for the other's calls. Use it only to cap spend or to stay under a provider's account-wide limit. A value that is not a positive number stops the agent at startup.
+
 ### MCP Server URL
 
 The default value in `.env.example` works as-is for local development:
