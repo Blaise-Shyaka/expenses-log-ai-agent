@@ -52,15 +52,18 @@ class ExpensesRepository(GenericSqlRepository[ExpenseDB]):
         self, skip: int = 0, limit: int = 10, category_name: str | None = None
     ) -> Sequence[ExpenseDB]:
         statement = self._scoped(select(ExpenseDB))
-        # Pagination only applies to the category-filtered listing, matching the
-        # endpoint's behaviour before the repository refactor.
         if category_name:
-            statement = (
-                statement.join(CategoryDB)
-                .filter(func.lower(CategoryDB.name) == category_name.lower())
-                .offset(skip)
-                .limit(limit)
+            statement = statement.join(CategoryDB).filter(
+                func.lower(CategoryDB.name) == category_name.lower()
             )
+        # Newest first. created_at and id break ties so pages do not overlap.
+        statement = (
+            statement.order_by(
+                ExpenseDB.date.desc(), ExpenseDB.created_at.desc(), ExpenseDB.id.desc()
+            )
+            .offset(skip)
+            .limit(limit)
+        )
         try:
             results = await self.session.execute(statement)
         except SQLAlchemyError as exc:
