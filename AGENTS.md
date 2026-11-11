@@ -87,6 +87,8 @@ Each package has its own `.env` (copy from `.env.example`). There is no shared r
 - `DEEPSEEK_API_KEY` — used when `OLLAMA_URL` is absent
 - `MCP_URL` — defaults to `http://localhost:8124`
 - `PORT` — defaults to `8123`
+- `RELOAD` — `true`, `1` or `yes` restarts the server on code changes; off by default, and should stay unset when deployed
+- `LLM_REQUESTS_PER_SECOND` — optional cap on model calls per second, shared by every user of the process; unset or blank means no limit, and a value that is not a positive number stops the agent at startup
 - `AUTH_REQUIRED` — defaults to `true`
 - `AUTH_JWKS_URI`, `AUTH_ISSUER` — where to verify user tokens
 - `AUTH_TOKEN_URL`, `AGENT_CLIENT_ID`, `AGENT_CLIENT_SECRET` — client credentials for the outbound token to the MCP server
@@ -97,6 +99,7 @@ Each package has its own `.env` (copy from `.env.example`). There is no shared r
 - `AUTH_SERVICE_URL` — defaults to `http://localhost:8001`
 - `AUTH_SECRET` — next-auth secret for the session cookie
 - `AUTH_TRUST_HOST` — `true` lets next-auth build redirects from the reverse proxy's forwarded headers
+- `NODE_ENV` — `production` (set in the Dockerfile) marks every auth cookie `Secure`, so the production build must be served over HTTPS (`lib/auth-cookies.ts`)
 
 ---
 
@@ -150,7 +153,8 @@ START → llm_node → [tools_condition] → tools → llm_node → END
 
 **LLM selection** (`src/llm.py`):
 - `OLLAMA_URL` present → `ChatOllama` (llama3.2)
-- otherwise → `ChatDeepSeek` (deepseek-chat) with one `InMemoryRateLimiter` at 0.2 requests per second for the whole process
+- otherwise → `ChatDeepSeek` (deepseek-chat)
+- `LLM_REQUESTS_PER_SECOND` set → one `InMemoryRateLimiter` at that rate for the whole process, whichever model is used; unset → no limit
 
 ---
 
