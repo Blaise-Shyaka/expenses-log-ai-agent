@@ -241,7 +241,7 @@ The `# type: ignore` and `# pyright: ignore` comments throughout the agent code 
 
 ## Known Duplication / Tech Debt
 
-- `expenses-mcp/src/types.py` is a copy of `expenses-api/schemas/schema.py`. Do not add a type to one side without updating the other.
+- `expenses-mcp/src/types.py` is a copy of `expenses-api/schemas/schema.py`, tracked in #16. Do not add a type to one side without updating the other.
 - `expenses-mcp/src/tools.py` configures logging with `logging.basicConfig` directly, noted with a `# Worth moving` comment.
 
 ---
