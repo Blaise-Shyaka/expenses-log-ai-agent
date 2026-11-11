@@ -30,6 +30,9 @@ logger = logging.getLogger(__name__)  # Worth moving
 
 EXPENSES_API_URL = environ.get("EXPENSES_API_URL", "http://localhost:8000/api/v1")
 
+# (connect, read) seconds; a stalled API must not hold an MCP tool forever.
+REQUEST_TIMEOUT: tuple[float, float] = (5.0, 30.0)
+
 session = requests.Session()
 adapter = HTTPAdapter(
     pool_connections=10,
@@ -50,7 +53,7 @@ def get_all_expenses(auth_headers: dict[str, str]) -> list[ExpenseWithCategory]:
     """
     url = EXPENSES_API_URL + "/expenses/"
     try:
-        response = session.get(url, headers=auth_headers)
+        response = session.get(url, headers=auth_headers, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -70,7 +73,7 @@ def create_expense_category(name: str, description: str, auth_headers: dict[str,
     url = EXPENSES_API_URL + "/categories/"
     payload = {"name": name, "description": description}
     try:
-        response = session.post(url, json=payload, headers=auth_headers)
+        response = session.post(url, json=payload, headers=auth_headers, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -82,7 +85,7 @@ def get_all_categories(auth_headers: dict[str, str]) -> list[Category]:
     """It retrieves all categories. It retrieves the first 100 entries."""
     url = EXPENSES_API_URL + "/categories/"
     try:
-        response = session.get(url, headers=auth_headers)
+        response = session.get(url, headers=auth_headers, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -98,7 +101,7 @@ def get_category_by_name(name: str, auth_headers: dict[str, str]) -> Category:
     """
     url = EXPENSES_API_URL + "/categories/name/" + name
     try:
-        response = session.get(url, headers=auth_headers)
+        response = session.get(url, headers=auth_headers, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -132,7 +135,7 @@ def create_expense(
         "category_name": category_name,
     }
     try:
-        response = session.post(url, json=payload, headers=auth_headers)
+        response = session.post(url, json=payload, headers=auth_headers, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -149,7 +152,7 @@ def get_expenses_by_category(auth_headers: dict[str, str]) -> list[CategoryWithT
     """
     url = EXPENSES_API_URL + "/expenses/totals/by-category/"
     try:
-        response = session.get(url, headers=auth_headers)
+        response = session.get(url, headers=auth_headers, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:
@@ -192,7 +195,7 @@ def get_expenses_since(
         params["category_name"] = category_name
 
     try:
-        response = session.get(url, params=params, headers=auth_headers)
+        response = session.get(url, params=params, headers=auth_headers, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         return response.json()  # type: ignore[no-any-return]
     except RequestException as e:

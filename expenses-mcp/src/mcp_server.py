@@ -8,6 +8,7 @@ Run standalone (from expenses-mcp/):
 The agent (main.py) does NOT start this process — they run as separate processes.
 """
 
+import asyncio
 import logging
 from datetime import datetime
 from os import environ
@@ -92,7 +93,7 @@ async def get_all_expenses() -> list[ExpenseWithCategory]:
     """
     acting_user = resolve_acting_user()
     auth_headers = await svc_token_client.build_headers(acting_user)
-    return _get_all_expenses(auth_headers)
+    return await asyncio.to_thread(_get_all_expenses, auth_headers)
 
 
 @mcp.tool  # type: ignore[misc]
@@ -107,7 +108,7 @@ async def create_expense_category(name: str, description: str) -> Category:
     """
     acting_user = resolve_acting_user()
     auth_headers = await svc_token_client.build_headers(acting_user)
-    return _create_expense_category(name, description, auth_headers)
+    return await asyncio.to_thread(_create_expense_category, name, description, auth_headers)
 
 
 @mcp.tool  # type: ignore[misc]
@@ -115,7 +116,7 @@ async def get_all_categories() -> list[Category]:
     """It retrieves all categories. It retrieves the first 100 entries."""
     acting_user = resolve_acting_user()
     auth_headers = await svc_token_client.build_headers(acting_user)
-    return _get_all_categories(auth_headers)
+    return await asyncio.to_thread(_get_all_categories, auth_headers)
 
 
 @mcp.tool  # type: ignore[misc]
@@ -127,7 +128,7 @@ async def get_category_by_name(name: str) -> Category:
     """
     acting_user = resolve_acting_user()
     auth_headers = await svc_token_client.build_headers(acting_user)
-    return _get_category_by_name(name, auth_headers)
+    return await asyncio.to_thread(_get_category_by_name, name, auth_headers)
 
 
 @mcp.tool  # type: ignore[misc]
@@ -147,7 +148,9 @@ async def create_expense(
     """
     acting_user = resolve_acting_user()
     auth_headers = await svc_token_client.build_headers(acting_user)
-    return _create_expense(amount, description, date, category_name, auth_headers)
+    return await asyncio.to_thread(
+        _create_expense, amount, description, date, category_name, auth_headers
+    )
 
 
 @mcp.tool  # type: ignore[misc]
@@ -160,7 +163,7 @@ async def get_expenses_by_category() -> list[CategoryWithTotal]:
     """
     acting_user = resolve_acting_user()
     auth_headers = await svc_token_client.build_headers(acting_user)
-    return _get_expenses_by_category(auth_headers)
+    return await asyncio.to_thread(_get_expenses_by_category, auth_headers)
 
 
 @mcp.tool  # type: ignore[misc]
@@ -188,4 +191,6 @@ async def get_expenses_since(
     """
     acting_user = resolve_acting_user()
     auth_headers = await svc_token_client.build_headers(acting_user)
-    return _get_expenses_since(days, start_date, category_name, auth_headers)
+    return await asyncio.to_thread(
+        _get_expenses_since, days, start_date, category_name, auth_headers
+    )
