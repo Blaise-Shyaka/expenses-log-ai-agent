@@ -47,7 +47,7 @@ User visits UI, not yet logged in
       │
       ▼
   UI (port 3000)
-  Next.js middleware redirects to /login
+  Next.js proxy (proxy.ts) redirects to /login
       │  POST AUTH_SERVICE_URL/login
       ▼
   expenses-auth (port 8001)
@@ -59,7 +59,7 @@ User visits UI, not yet logged in
       ▼
   UI (port 3000)
   CopilotChat component
-      │  POST /api/copilotkit  (Next.js route handler, injects Bearer access token)
+      │  POST /api/copilotkit  (browser attaches Bearer access token)
       ▼
   UI route handler
   proxies AG-UI streaming request
@@ -89,9 +89,9 @@ User visits UI, not yet logged in
   Agent replies in natural language
 ```
 
-> **Note on MCP:** The agent connects to the MCP server (`expenses-mcp`, port 8124) once at startup to load its tools. During a conversation, tool calls execute in-process — the agent does not make a round-trip to the MCP server per message.
+> **Note on MCP:** The agent loads its tool definitions from the MCP server (`expenses-mcp`, port 8124) once at startup. After that, every tool call is a network round trip: the agent calls `expenses-mcp` over HTTP, which calls `expenses-api` over HTTP.
 
-> **Note on auth:** Each of `expenses-api`, `expenses-mcp`, and `expenses-agent` can run with `AUTH_REQUIRED=false` for local development without standing up `expenses-auth` — see the individual READMEs. The UI always requires it (there's no bypass for the login redirect).
+> **Note on auth:** `expenses-api`, `expenses-mcp` and `expenses-agent` each accept `AUTH_REQUIRED=false`, which skips checking incoming tokens in that service only. `expenses-auth` must still run, because the agent and the MCP server fetch their service tokens from it, and the MCP tools fail without a verified token. The UI has no bypass for the login redirect.
 
 The agent can use either [DeepSeek](https://platform.deepseek.com) (cloud) or [Ollama](https://ollama.com) (local) as its LLM, controlled by a single environment variable.
 
@@ -106,7 +106,7 @@ cd expenses-log-ai-agent
 
 Then follow each service's README in order:
 
-1. [expenses-auth](./expenses-auth/README.md) — start the auth service first (or set `AUTH_REQUIRED=false` in every other service below to skip it)
+1. [expenses-auth](./expenses-auth/README.md) — start the auth service first; the agent, the MCP server and the UI need it even with `AUTH_REQUIRED=false`
 2. [expenses-api](./expenses-api/README.md) — start MySQL and the REST API
 3. [expenses-mcp](./expenses-mcp/README.md) — start the MCP tool server (depends on the API)
 4. [expenses-agent](./expenses-agent/README.md) — start the agent (depends on the MCP server)
