@@ -7,7 +7,7 @@ import { LangGraphHttpAgent } from "@copilotkit/runtime/langgraph";
 import { NextRequest } from "next/server";
 
 const serviceAdapter = new ExperimentalEmptyAdapter();
-const deploymentUrl = process.env.AGENT_URL ?? "http://localhost:8123";
+const deploymentUrl = process.env.AGENT_URL ?? "http://localhost:8000/agent";
 
 const runtime = new CopilotRuntime({
   agents: {

@@ -1,9 +1,13 @@
 import os
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from agent.server import agent_lifespan, agent_status
+from agent.server import router as agent_router
 from api.v1.endpoints.category import router as category_router
 from api.v1.endpoints.expense import router as expense_router
 from config.db_config import app_settings
@@ -14,8 +18,16 @@ from exceptions.custom_exceptions import (
     RepositoryException,
 )
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+    async with agent_lifespan():
+        yield
+
+
 app = FastAPI(
     title="Expenses Tracker API",
+    lifespan=lifespan,
     docs_url="/docs" if app_settings.DEBUG else None,
     redoc_url="/redoc" if app_settings.DEBUG else None,
     openapi_url="/openapi.json" if app_settings.DEBUG else None,
@@ -42,11 +54,12 @@ async def repository_exception_handler(request: Request, exc: RepositoryExceptio
 
 app.include_router(expense_router, prefix="/api/v1/expenses", tags=["Expenses"])
 app.include_router(category_router, prefix="/api/v1/categories", tags=["Categories"])
+app.include_router(agent_router, tags=["Agent"])
 
 
 @app.get("/health")
 async def health() -> JSONResponse:
-    return JSONResponse({"status": "ok"})
+    return JSONResponse({"status": "ok", "agent": agent_status()})
 
 
 if __name__ == "__main__":

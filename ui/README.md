@@ -1,12 +1,12 @@
 # UI
 
-Next.js chat interface powered by [CopilotKit](https://docs.copilotkit.ai). Talks to the Expenses Agent to log and query expenses via natural conversation.
+Next.js chat interface powered by [CopilotKit](https://docs.copilotkit.ai). Talks to the agent at the app's `/agent` route to log and query expenses via natural conversation.
 
 ## Prerequisites
 
 - Node.js 18+
 - pnpm
-- [Expenses Agent](../expenses-agent/README.md). It should run at `AGENT_URL` that you'll pass in `.env`.
+- [expenses-api](../expenses-api/README.md), which serves the agent at `/agent`. Pass that URL as `AGENT_URL` in `.env`.
 
 ## 1. Configure Environment
 
@@ -17,7 +17,7 @@ cp .env.example .env
 Set the required variables:
 
 ```
-AGENT_URL=http://localhost:8123      # URL of the expenses agent
+AGENT_URL=http://localhost:8000/agent  # the agent route on expenses-api
 AUTH_SERVICE_URL=http://localhost:8001  # URL of the Go auth service
 AUTH_SECRET=<generated-secret>       # Cookie-encryption secret for Auth.js
 ```
