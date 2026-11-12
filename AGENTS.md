@@ -83,8 +83,8 @@ Each package has its own `.env` (copy from `.env.example`). There is no shared r
 - `AUTH_TOKEN_URL`, `MCP_CLIENT_ID`, `MCP_CLIENT_SECRET` — client credentials for the outbound token to the API; tool calls fail if any is missing
 
 **`expenses-agent`** (`src/llm.py`, `src/auth.py`, `src/token_client.py`, `src/mcp_client.py`, `main.py`):
-- `OLLAMA_URL` — if present, the agent uses Ollama, even when the value is empty
-- `DEEPSEEK_API_KEY` — used when `OLLAMA_URL` is absent
+- `OLLAMA_URL` — if it has a value, the agent uses Ollama; unset, empty or whitespace-only means DeepSeek
+- `DEEPSEEK_API_KEY` — used when `OLLAMA_URL` is unset or blank
 - `MCP_URL` — defaults to `http://localhost:8124`
 - `PORT` — defaults to `8123`
 - `RELOAD` — `true`, `1` or `yes` restarts the server on code changes; off by default, and should stay unset when deployed
@@ -152,8 +152,8 @@ START → llm_node → [tools_condition] → tools → llm_node → END
 - `make_graph` is an `@asynccontextmanager` used by both the FastAPI lifespan and `langgraph dev` (`langgraph.json` points at `./main.py:make_graph`, which re-exports it).
 
 **LLM selection** (`src/llm.py`):
-- `OLLAMA_URL` present → `ChatOllama` (llama3.2)
-- otherwise → `ChatDeepSeek` (deepseek-chat)
+- `OLLAMA_URL` has a value → `ChatOllama` (llama3.2)
+- otherwise (unset, empty or whitespace-only) → `ChatDeepSeek` (deepseek-chat)
 - `LLM_REQUESTS_PER_SECOND` set → one `InMemoryRateLimiter` at that rate for the whole process, whichever model is used; unset → no limit
 
 ---
