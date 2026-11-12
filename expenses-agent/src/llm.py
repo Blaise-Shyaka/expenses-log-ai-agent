@@ -30,9 +30,10 @@ def _make_rate_limiter() -> InMemoryRateLimiter | None:
 
 
 rate_limiter = _make_rate_limiter()
-ollama_url = environ.get("OLLAMA_URL")
+# Blank counts as unset: python-dotenv loads `OLLAMA_URL=` from .env.example as "".
+ollama_url = environ.get("OLLAMA_URL", "").strip()
 
-if ollama_url is not None:
+if ollama_url:
     from langchain_ollama import ChatOllama
 
     llm = ChatOllama(

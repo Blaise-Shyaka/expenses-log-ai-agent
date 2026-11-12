@@ -37,7 +37,7 @@ docker exec -it ollama ollama pull llama3.2
 OLLAMA_URL=http://localhost:11434
 ```
 
-> If `OLLAMA_URL` is set, it takes precedence and DeepSeek is ignored.
+> If `OLLAMA_URL` has a value, it takes precedence and DeepSeek is ignored. Left blank, as in `.env.example`, it counts as unset and DeepSeek is used.
 
 ### Rate limit (optional)
 
