@@ -1,5 +1,7 @@
 # Expenses Agent
 
+> **Moved.** The agent now lives in [`expenses-api/agent/`](../expenses-api/agent/) and is served at the app's `/agent` route; run it from [expenses-api](../expenses-api/README.md). This copy stays only because it is still the deployed agent until #63 switches the UI over and removes it. Do not change it.
+
 LangGraph AI agent that understands, categorizes, and records expenses. Talks to the user via a CopilotKit chat interface and calls tools exposed by the MCP server. Runs as a FastAPI server on port 8123.
 
 ## Prerequisites

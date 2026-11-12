@@ -30,14 +30,14 @@ There are already default categories, but you can edit or add more. If you'd pre
 
 ## Architecture
 
-Five services, each with its own README:
+The agent now runs inside `expenses-api` at `/agent`. Each service has its own README:
 
 | Service | Description | README |
 |---|---|---|
 | **expenses-auth** | Go service that issues and verifies JWTs (user login + service-to-service tokens) | [README](./expenses-auth/README.md) |
-| **expenses-api** | FastAPI REST API that stores and queries expenses via MySQL | [README](./expenses-api/README.md) |
+| **expenses-api** | FastAPI app: the REST API that stores and queries expenses via MySQL (`/api/v1`) and the LangGraph agent that understands messages and calls MCP tools (`/agent`) | [README](./expenses-api/README.md) |
 | **expenses-mcp** | MCP server that exposes expense tools to the agent | [README](./expenses-mcp/README.md) |
-| **expenses-agent** | LangGraph AI agent that understands messages and calls MCP tools | [README](./expenses-agent/README.md) |
+| **expenses-agent** | The standalone agent, still deployed until the UI is switched to `/agent` (#63). Frozen: make agent changes in `expenses-api/agent/` | [README](./expenses-agent/README.md) |
 | **ui** | Next.js chat interface powered by CopilotKit | [README](./ui/README.md) |
 
 ### Request Flow
@@ -63,9 +63,9 @@ User visits UI, not yet logged in
       ▼
   UI route handler
   proxies AG-UI streaming request
-      │  POST / (AG-UI protocol, Authorization: Bearer <jwt>)
+      │  POST /agent (AG-UI protocol, Authorization: Bearer <jwt>)
       ▼
-  Expenses Agent (port 8123)
+  Expenses API, agent route (port 8000)
   verifies JWT against Auth Service JWKS, then:
   LangGraph: llm_node → [tool call?] → llm_node
       │  executes tool (loaded from MCP at startup), attaches its own service token
@@ -89,9 +89,9 @@ User visits UI, not yet logged in
   Agent replies in natural language
 ```
 
-> **Note on MCP:** The agent loads its tool definitions from the MCP server (`expenses-mcp`, port 8124) once at startup. After that, every tool call is a network round trip: the agent calls `expenses-mcp` over HTTP, which calls `expenses-api` over HTTP.
+> **Note on MCP:** The agent loads its tool definitions from the MCP server (`expenses-mcp`, port 8124) once at startup. After that, every tool call is a network round trip: the agent calls `expenses-mcp` over HTTP, which calls back into `expenses-api`'s `/api/v1` over HTTP.
 
-> **Note on auth:** `expenses-api`, `expenses-mcp` and `expenses-agent` each accept `AUTH_REQUIRED=false`, which skips checking incoming tokens in that service only. `expenses-auth` must still run, because the agent and the MCP server fetch their service tokens from it, and the MCP tools fail without a verified token. The UI has no bypass for the login redirect.
+> **Note on auth:** `expenses-api` (for both `/api/v1` and `/agent`) and `expenses-mcp` each accept `AUTH_REQUIRED=false`, which skips checking incoming tokens in that service only. `expenses-auth` must still run, because the agent and the MCP server fetch their service tokens from it, and the MCP tools fail without a verified token. The UI has no bypass for the login redirect.
 
 The agent can use either [DeepSeek](https://platform.deepseek.com) (cloud) or [Ollama](https://ollama.com) (local) as its LLM, controlled by a single environment variable.
 
@@ -107,7 +107,6 @@ cd expenses-log-ai-agent
 Then follow each service's README in order:
 
 1. [expenses-auth](./expenses-auth/README.md) — start the auth service first; the agent, the MCP server and the UI need it even with `AUTH_REQUIRED=false`
-2. [expenses-api](./expenses-api/README.md) — start MySQL and the REST API
+2. [expenses-api](./expenses-api/README.md) — start MySQL and the app (REST API and agent); the agent loads in the background once the MCP server is up
 3. [expenses-mcp](./expenses-mcp/README.md) — start the MCP tool server (depends on the API)
-4. [expenses-agent](./expenses-agent/README.md) — start the agent (depends on the MCP server)
-5. [ui](./ui/README.md) — start the chat interface last
+4. [ui](./ui/README.md) — start the chat interface last

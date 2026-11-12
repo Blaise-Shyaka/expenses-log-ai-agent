@@ -1,12 +1,13 @@
 # Expenses API
 
-FastAPI REST API for storing and querying expenses. It uses Async SQLAlchemy + MySQL, and migrations via Alembic.
+FastAPI app that serves the REST API for storing and querying expenses (`/api/v1`) and the chat agent (`/agent`). It uses Async SQLAlchemy + MySQL, and migrations via Alembic. The agent is a LangGraph graph in the `agent` package; it still loads its tools from [expenses-mcp](../expenses-mcp/README.md).
 
 ## Prerequisites
 
 - Python 3.13+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) — Python package manager
 - Docker — for running MySQL locally
+- For `/agent`: [expenses-auth](../expenses-auth/README.md) and [expenses-mcp](../expenses-mcp/README.md) running, and a DeepSeek API key or a local Ollama
 
 ## 1. Start MySQL
 
@@ -47,7 +48,41 @@ AUTH_AUDIENCE="expenses-api"
 AUTH_REQUIRED=true
 ```
 
-Set `AUTH_REQUIRED=false` to bypass authentication in local development (all requests pass through unauthenticated). Set `DEBUG=true` to re-enable `/docs`, `/redoc`, and `/openapi.json`.
+`AUTH_JWKS_URI`, `AUTH_ISSUER` and `AUTH_REQUIRED` apply to both `/api/v1` and `/agent`. `AUTH_AUDIENCE` applies to `/api/v1` only, and stays `expenses-api` while `expenses-mcp` calls the API with its service token. `/agent` checks user tokens for audience `expenses-agent`, the audience `expenses-auth` gives them.
+
+Set `AUTH_REQUIRED=false` to bypass authentication in local development: `/api/v1` requests pass through unauthenticated and `/agent` runs every request as the dev user `00000000-0000-0000-0000-000000000001`. **Never use this in production.** Set `DEBUG=true` to re-enable `/docs`, `/redoc`, and `/openapi.json`.
+
+### Agent
+
+The agent at `/agent` is off unless a model is configured. You need **either** DeepSeek **or** Ollama:
+
+```
+DEEPSEEK_API_KEY=sk-...          # from platform.deepseek.com
+OLLAMA_URL=http://localhost:11434  # a value here takes precedence; blank means DeepSeek
+```
+
+To run Ollama with llama3.2:
+
+```bash
+docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+docker exec -it ollama ollama pull llama3.2
+```
+
+The agent loads its tools from the MCP server, using a service token from `expenses-auth`:
+
+```
+MCP_URL=http://localhost:8124
+AUTH_TOKEN_URL=http://localhost:8001/oauth/token
+AGENT_CLIENT_ID=svc-agent
+AGENT_CLIENT_SECRET=<the SVC_AGENT_SECRET given to expenses-auth>
+```
+
+The agent starts in the background, so the REST API serves straight away. Until it has loaded its tools, `/agent` answers 503 and `/health` shows `"agent": {"name": null}`; if startup fails it logs a warning and retries every 30 seconds.
+
+Optional:
+
+- `LLM_REQUESTS_PER_SECOND` caps model calls per second for the whole process, shared by every user. Unset means no limit. A value that is not a positive number stops the agent (not the API) from starting.
+- `LANGSMITH_API_KEY`, `LANGSMITH_TRACING`, `LANGSMITH_PROJECT` send traces to LangSmith; read by the LangSmith SDK.
 
 ## 3. Install Dependencies
 
@@ -77,7 +112,17 @@ For development with auto-reload:
 uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-The API is now running at `http://localhost:8000`.
+The app is now running at `http://localhost:8000`: the REST API under `/api/v1`, the agent at `/agent` and a health check at `/health`. Point the UI's `AGENT_URL` at `http://localhost:8000/agent`.
+
+### LangGraph Studio
+
+To inspect the agent graph, step through tool calls and replay conversations:
+
+```bash
+uv run langgraph dev
+```
+
+`langgraph.json` loads the graph from `agent/graph.py:make_graph` and reads `.env`. It needs the MCP server and `expenses-auth`, like `/agent`. Safari blocks localhost connections; use `uv run langgraph dev --tunnel` there.
 
 ## Exploring the API
 
@@ -108,4 +153,7 @@ POST   /api/v1/categories/                  Create category
 GET    /api/v1/categories/                  List categories
 GET    /api/v1/categories/{id}              Get by UUID
 GET    /api/v1/categories/name/{name}       Get by name (case-insensitive)
+
+POST   /agent                               Chat with the agent (AG-UI event stream)
+GET    /health                              Health check, with the agent's name once it has loaded
 ```
