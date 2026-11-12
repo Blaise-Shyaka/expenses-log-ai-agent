@@ -13,7 +13,8 @@ async def enforce_auth(
     request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)] = None,
 ) -> None:
-    if request.url.path == "/health":
+    # /agent checks its own user token (audience expenses-agent) until #62 unifies auth.
+    if request.url.path in ("/health", "/agent"):
         return
     if not app_settings.AUTH_REQUIRED:
         return
